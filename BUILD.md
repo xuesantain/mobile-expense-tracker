@@ -19,6 +19,13 @@ cd android
 
 这个流程不需要配置 `EXPO_TOKEN`，适合当前项目先快速产出测试版 APK。
 
+如果 Actions 失败，会额外上传 `android-build-logs` artifact。里面包含：
+
+- `prebuild.log`：Expo 生成 Android 工程日志
+- `gradle-build.log`：Gradle 构建 APK 日志
+
+排查时优先打开失败 job 的红色步骤日志；如果页面日志太长，就下载 `android-build-logs` 查看最后 100 行。
+
 `--non-interactive` 在当前 Expo CLI 中不适用于 `prebuild`，因此通过 `CI=1` 进入非交互模式。
 
 ## 方式二：EAS 云构建

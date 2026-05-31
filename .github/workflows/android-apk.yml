@@ -9,6 +9,9 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    env:
+      CI: 1
+      EXPO_NO_TELEMETRY: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,19 +40,36 @@ jobs:
       - name: Test
         run: npm test -- --runInBand
 
+      - name: Expo config check
+        run: npx expo config --type public
+
       - name: Generate Android project
-        run: npx expo prebuild --platform android --no-install
-        env:
-          CI: 1
+        run: |
+          set -euxo pipefail
+          npx expo prebuild --platform android --no-install --clean 2>&1 | tee prebuild.log
+          test -f android/gradlew
+          find android -maxdepth 2 -type f | sort | head -100
 
       - name: Build debug APK
         run: |
+          set -euxo pipefail
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug
+          ./gradlew --version
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-logs
+          path: |
+            prebuild.log
+            gradle-build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: mobile-expense-tracker-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
