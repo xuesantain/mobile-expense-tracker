@@ -1,37 +1,57 @@
-# Daily Ledger
+# 手机记账 App
 
-A local-first mobile expense tracker MVP built with Expo, React Native, TypeScript, and SQLite.
+一个本地优先的手机记账应用，基于 Expo、React Native、TypeScript 和 SQLite 构建。项目目标是提供轻量、清爽、适合日常使用的记账体验，支持手动记账、分类统计、预算管理、截图识别导入和本地数据持久化。
 
-## Implemented
+## 已实现功能
 
-- Local SQLite schema, migration, and default seed data.
-- Default expense and income categories.
-- Default accounts for cash, WeChat Pay, Alipay, and bank card.
-- Manual transaction entry with amount, type, category, account, date, merchant, and note.
-- Home dashboard with monthly expense, income, budget, and recent records.
-- Records screen with search, delete, and CSV export.
-- Statistics screen with category spend and account flow.
-- Monthly total budget screen.
-- Receipt screenshot intake plus OCR text parsing and user confirmation before saving.
+- 本地 SQLite 数据库、迁移和默认数据初始化。
+- 支出 / 收入记账，支持金额、分类、日期、商户 / 对象和备注。
+- 明细页按月份查看账单，并按实际记账日期分组展示。
+- 支持切换月份，未来月份不可选，并提供返回本月入口。
+- 支持账单编辑、复制和删除。
+- 支持自定义分类，新增分类会参与记账和图表统计。
+- 图表页展示分类支出占比，以及每日 / 每月 / 每年的收支折线趋势。
+- 预算页支持设置月度预算并查看预算进度。
+- 截图识别导入流程：选择票据或账单截图，识别候选账单，用户确认后再入账。
+- 支持 Qwen3-VL-Flash 图片识别 API Key 配置和测试。
 
-## Run
+## 运行项目
 
 ```bash
 npm install
 npm run start
 ```
 
-Use Expo Go, an Android emulator, or an iOS simulator to open the project.
+启动后可以使用 Expo Go、Android 模拟器或 iOS 模拟器打开项目。
 
-## Verify
+常用命令：
+
+```bash
+npm run android
+npm run ios
+npm run web
+```
+
+## 验证
+
+提交或打包前建议运行：
 
 ```bash
 npm run typecheck
 npm test
 ```
 
-## OCR
+## OCR 识别说明
 
-The MVP implements the confirmation flow now: choose an image, paste OCR text, parse candidate amount/date/merchant/category, then confirm the entry before saving it.
+当前 OCR 流程保留“先识别、再确认、最后入账”的设计，避免模型识别错误时直接写入账本。
 
-Native image-to-text can be added later by replacing only the image-to-text adapter. Keep the confirmation step so bad OCR does not write directly to the ledger.
+图片识别主要由 Qwen3-VL-Flash 完成，用于从票据、微信账单、支付宝账单等截图中提取候选账单信息，包括金额、日期、商户、收支类型和分类。识别结果会进入确认页，用户可以检查后再导入。
+
+## 技术栈
+
+- Expo
+- React Native
+- TypeScript
+- SQLite
+- Jest
+

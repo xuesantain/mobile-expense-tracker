@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { LayoutChangeEvent, Pressable, Text, View } from "react-native";
 import { styles } from "../styles";
+import { TransactionType } from "../types";
 import { formatMoney } from "../utils/money";
 
 export type TrendPoint = {
@@ -10,76 +11,116 @@ export type TrendPoint = {
 };
 
 const chartHeight = 150;
+const labelHeight = 30;
+const nodeSize = 11;
+const lineThickness = 2;
 
-export function TrendChart({ points }: { points: TrendPoint[] }) {
+export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: TransactionType }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const maxValue = Math.max(...points.map((point) => Math.max(point.expense, point.income)), 1);
+  const [plotWidth, setPlotWidth] = useState(0);
+  const values = points.map((point) => point[metric]);
+  const total = Math.round(values.reduce((sum, value) => sum + value, 0) * 100) / 100;
+  const average = points.length ? Math.round((total / points.length) * 100) / 100 : 0;
+  const maxValue = Math.max(...values, 1);
   const selected = selectedIndex === null ? null : points[selectedIndex] ?? null;
+  const nodes = useMemo(() => layoutNodes(points, metric, maxValue, plotWidth), [points, metric, maxValue, plotWidth]);
+
+  function handlePlotLayout(event: LayoutChangeEvent) {
+    setPlotWidth(event.nativeEvent.layout.width);
+  }
 
   return (
-    <View style={styles.chartCard}>
-      <View style={styles.trendLegend}>
-        <Text style={styles.legendValue}>支出</Text>
-        <Text style={styles.income}>收入</Text>
+    <View style={styles.flatTrendCard}>
+      <View style={styles.trendMetaRow}>
+        <View>
+          <Text style={styles.trendMetaText}>总{metric === "expense" ? "支出" : "收入"}：{formatMoney(total)}</Text>
+          <Text style={styles.trendMetaText}>平均值：{formatMoney(average)}</Text>
+        </View>
+        <Text style={styles.trendMaxText}>{formatMoney(maxValue)}</Text>
       </View>
       {selected ? (
         <Text style={styles.trendSelectedText}>
-          {selected.label}  支出 {formatMoney(selected.expense)} / 收入 {formatMoney(selected.income)}
+          {selected.label} {metric === "expense" ? "支出" : "收入"} {formatMoney(selected[metric])}
         </Text>
-      ) : (
-        <Text style={styles.mutedText}>点击节点查看金额</Text>
-      )}
-      <View style={styles.lineChartWrap}>
-        <View style={styles.yAxis}>
-          <Text style={styles.axisLabel}>{formatMoney(maxValue)}</Text>
-          <Text style={styles.axisLabel}>{formatMoney(maxValue / 2)}</Text>
-          <Text style={styles.axisLabel}>¥0.00</Text>
-        </View>
-        <View style={styles.linePlot}>
-          <View style={styles.gridLineTop} />
-          <View style={styles.gridLineMiddle} />
-          <View style={styles.gridLineBottom} />
-          <View style={styles.lineSeries}>{renderSegments(points, maxValue, "expense")}</View>
-          <View style={styles.lineSeries}>{renderSegments(points, maxValue, "income")}</View>
-          <View style={styles.lineNodes}>
-            {points.map((point, index) => (
-              <Pressable key={point.label} style={styles.linePointColumn} onPress={() => setSelectedIndex(index)}>
-                <View style={[styles.lineNode, { bottom: pointBottom(point.expense, maxValue), backgroundColor: "#ffd83d" }]} />
-                <View style={[styles.lineNode, { bottom: pointBottom(point.income, maxValue), backgroundColor: "#13b981" }]} />
-                <Text style={styles.trendLabel}>{point.label}</Text>
-              </Pressable>
-            ))}
+      ) : null}
+      <View style={styles.simpleLinePlot} onLayout={handlePlotLayout}>
+        <View style={styles.gridLineTop} />
+        <View style={styles.gridLineMiddle} />
+        <View style={styles.gridLineBottom} />
+        {plotWidth > 0 ? (
+          <View style={styles.lineSeries}>
+            {nodes.slice(0, -1).map((node, index) => renderSegment(node, nodes[index + 1], `${metric}-${node.label}-${index}`))}
           </View>
+        ) : null}
+        <View style={styles.lineTapLayer}>
+          {nodes.map((node, index) => (
+            <Pressable key={`${node.label}-${index}`} style={[styles.lineTapColumn, { left: node.columnLeft, width: node.columnWidth }]} onPress={() => setSelectedIndex(index)}>
+              <View
+                style={[
+                  styles.singleLineNode,
+                  index === selectedIndex && styles.singleLineNodeActive,
+                  {
+                    left: node.x - node.columnLeft - nodeSize / 2,
+                    bottom: node.bottom - nodeSize / 2,
+                    backgroundColor: node.value > 0 ? "#ffd83d" : "#fff"
+                  }
+                ]}
+              />
+              <Text style={styles.trendLabel}>{node.label}</Text>
+            </Pressable>
+          ))}
         </View>
       </View>
     </View>
   );
 }
 
-function renderSegments(points: TrendPoint[], maxValue: number, key: "expense" | "income") {
-  return points.slice(0, -1).map((point, index) => {
-    const next = points[index + 1];
-    const y1 = pointBottom(point[key], maxValue);
-    const y2 = pointBottom(next[key], maxValue);
-    const delta = y2 - y1;
-    const angle = Math.atan2(delta, 1) * (180 / Math.PI);
-    const color = key === "expense" ? "#ffd83d" : "#13b981";
-    return (
-      <View
-        key={`${key}-${point.label}-${next.label}`}
-        style={[
-          styles.lineSegment,
-          {
-            left: `${(index / Math.max(points.length - 1, 1)) * 100}%`,
-            bottom: y1 + 6,
-            width: `${100 / Math.max(points.length - 1, 1)}%`,
-            backgroundColor: color,
-            transform: [{ rotate: `${-angle}deg` }]
-          }
-        ]}
-      />
-    );
+type NodeLayout = {
+  label: string;
+  value: number;
+  x: number;
+  bottom: number;
+  columnLeft: number;
+  columnWidth: number;
+};
+
+function layoutNodes(points: TrendPoint[], key: TransactionType, maxValue: number, plotWidth: number): NodeLayout[] {
+  const count = points.length;
+  const columnWidth = count > 0 ? plotWidth / count : 0;
+  return points.map((point, index) => {
+    const x = columnWidth * index + columnWidth / 2;
+    return {
+      label: point.label,
+      value: point[key],
+      x,
+      bottom: labelHeight + pointBottom(point[key], maxValue),
+      columnLeft: columnWidth * index,
+      columnWidth
+    };
   });
+}
+
+function renderSegment(start: NodeLayout, end: NodeLayout, key: string) {
+  const dx = end.x - start.x;
+  const dy = end.bottom - start.bottom;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(-dy, dx) * (180 / Math.PI);
+
+  return (
+    <View
+      key={key}
+      style={[
+        styles.lineSegment,
+        {
+          left: start.x + dx / 2 - length / 2,
+          bottom: start.bottom + dy / 2 - lineThickness / 2,
+          width: length,
+          backgroundColor: "#3d3d42",
+          transform: [{ rotate: `${angle}deg` }]
+        }
+      ]}
+    />
+  );
 }
 
 function pointBottom(value: number, maxValue: number): number {

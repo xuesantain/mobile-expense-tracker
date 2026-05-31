@@ -266,8 +266,19 @@ export default function App() {
     if (!db) {
       return;
     }
-    await deleteTransaction(db, id);
-    await refresh(db, filters, month);
+    const transaction = transactions.find((item) => item.id === id);
+    const title = transaction?.merchant || transaction?.note || "这条账单";
+    Alert.alert("确认删除账单", `删除后无法恢复：${title}`, [
+      { text: "取消", style: "cancel" },
+      {
+        text: "删除",
+        style: "destructive",
+        onPress: async () => {
+          await deleteTransaction(db, id);
+          await refresh(db, filters, month);
+        }
+      }
+    ]);
   }
 
   async function saveBudget() {
@@ -299,12 +310,21 @@ export default function App() {
       Alert.alert("不能删除默认分类", "默认兜底分类需要保留。");
       return;
     }
-    const deleted = await deleteCategory(db, category.id);
-    if (!deleted) {
-      Alert.alert("分类正在使用", "已有账单使用该分类，不能直接删除。");
-      return;
-    }
-    await refresh(db, filters, month);
+    Alert.alert("确认删除分类", `长按删除会移除「${category.name}」。已有账单使用时会自动阻止删除。`, [
+      { text: "取消", style: "cancel" },
+      {
+        text: "删除",
+        style: "destructive",
+        onPress: async () => {
+          const deleted = await deleteCategory(db, category.id);
+          if (!deleted) {
+            Alert.alert("分类正在使用", "已有账单使用该分类，不能直接删除。");
+            return;
+          }
+          await refresh(db, filters, month);
+        }
+      }
+    ]);
   }
 
   async function saveAccountDraft() {
@@ -356,12 +376,11 @@ export default function App() {
   async function extractTextFromImage() {
     const uris = ocrImageUris.length ? ocrImageUris : ocrImageUri ? [ocrImageUri] : [];
     if (!uris.length) {
+      Alert.alert("未选择图片", "请先选择票据或账单截图。");
       return;
     }
     if (receiptImageProvider === "qwen" && qwenApiKey.trim()) {
-      setExtractingText(true);
       await parseOcrCandidate();
-      setExtractingText(false);
       return;
     }
     setExtractingText(true);
@@ -391,6 +410,7 @@ export default function App() {
 
     let structuredItems: StructuredReceiptItem[] = [];
     if (canUseQwenImage) {
+      setExtractingText(true);
       try {
         const batches = await Promise.all(
           imageUris.map((uri) =>
@@ -404,7 +424,9 @@ export default function App() {
         );
         structuredItems = batches.flat();
       } catch (error) {
-        Alert.alert("Qwen 图片识别失败", `已降级为 OCR 文本/本地规则解析：${String(error)}`);
+        Alert.alert("Qwen 图片识别失败", `没有写入任何账单。你可以检查 Key、网络和图片清晰度，或粘贴 OCR 文本后再解析。\n\n${String(error)}`);
+      } finally {
+        setExtractingText(false);
       }
     }
     const candidates = candidatesFromReceiptText({
@@ -417,9 +439,11 @@ export default function App() {
     });
 
     setReceiptCandidates(candidates);
-    const firstSelected = candidates.find((item) => item.selected && item.amount && item.date);
+    const firstSelected = candidates.find((item) => item.selected && item.amount && item.date && !item.duplicateOfTransactionId);
     if (!firstSelected) {
-      Alert.alert("未找到可导入账单", "没有识别到完整的金额和日期，或候选项都疑似重复。");
+      const duplicateCount = candidates.filter((item) => item.duplicateOfTransactionId).length;
+      const incompleteCount = candidates.filter((item) => !item.amount || !item.date).length;
+      Alert.alert("未找到可直接导入账单", `没有识别到完整的金额和日期，或候选项都疑似重复。\n疑似重复：${duplicateCount} 条\n信息不完整：${incompleteCount} 条`);
     }
   }
 
@@ -431,7 +455,7 @@ export default function App() {
     if (!db) {
       return;
     }
-    const selected = receiptCandidates.filter((item) => item.selected && item.amount && item.date);
+    const selected = receiptCandidates.filter((item) => item.selected && item.amount && item.date && !item.duplicateOfTransactionId);
     if (!selected.length) {
       Alert.alert("没有可导入账单", "请选择至少一条非重复且信息完整的候选账单。");
       return;
@@ -498,7 +522,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <StatusBar style="dark" backgroundColor={activeTab === "records" ? colors.primary : colors.background} />
+      <StatusBar style="dark" backgroundColor={activeTab === "records" || activeTab === "stats" ? colors.primary : colors.background} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentBody} keyboardShouldPersistTaps="handled">
           {activeTab === "records" ? (
@@ -536,7 +560,7 @@ export default function App() {
               onDeleteCategory={removeCategory}
             />
           ) : null}
-          {activeTab === "stats" ? <StatsScreen spendByCategory={spendByCategory} summary={summary} transactions={transactions} /> : null}
+          {activeTab === "stats" ? <StatsScreen categories={categories} spendByCategory={spendByCategory} month={month} transactions={transactions} /> : null}
           {activeTab === "discover" ? (
             <DiscoverScreen
               month={month}

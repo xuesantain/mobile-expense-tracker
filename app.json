@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Daily Ledger",
+    "name": "手机记账",
     "slug": "mobile-expense-tracker",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -13,7 +13,11 @@
       "bundleIdentifier": "com.local.mobileexpensetracker"
     },
     "android": {
-      "package": "com.local.mobileexpensetracker"
+      "package": "com.xuesantain.mobileexpensetracker",
+      "versionCode": 1,
+      "permissions": [
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "plugins": [
       "expo-sqlite",
