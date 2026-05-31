@@ -1,0 +1,59 @@
+import { View } from "react-native";
+import { BudgetScreen } from "./BudgetScreen";
+import { OcrScreen } from "./OcrScreen";
+import { styles } from "../styles";
+import { Budget, DashboardSummary, ReceiptImportCandidate } from "../types";
+
+export function DiscoverScreen({
+  month,
+  budgetAmount,
+  budgets,
+  summary,
+  ocrText,
+  ocrImageUri,
+  extractingText,
+  candidates,
+  onBudgetAmountChange,
+  onSaveBudget,
+  onOcrTextChange,
+  onPickImage,
+  onExtractText,
+  onParseOcr,
+  onToggleCandidate,
+  onImportCandidates
+}: {
+  month: string;
+  budgetAmount: string;
+  budgets: Budget[];
+  summary: DashboardSummary;
+  ocrText: string;
+  ocrImageUri: string | null;
+  extractingText: boolean;
+  candidates: ReceiptImportCandidate[];
+  onBudgetAmountChange: (value: string) => void;
+  onSaveBudget: () => void;
+  onOcrTextChange: (value: string) => void;
+  onPickImage: () => void;
+  onExtractText: () => void;
+  onParseOcr: () => void;
+  onToggleCandidate: (id: string) => void;
+  onImportCandidates: () => void;
+}) {
+  return (
+    <View>
+      <BudgetScreen month={month} budgetAmount={budgetAmount} budgets={budgets} summary={summary} onBudgetAmountChange={onBudgetAmountChange} onSave={onSaveBudget} />
+      <OcrScreen
+        text={ocrText}
+        imageUri={ocrImageUri}
+        extracting={extractingText}
+        candidates={candidates}
+        onTextChange={onOcrTextChange}
+        onPickImage={onPickImage}
+        onExtractText={onExtractText}
+        onParse={onParseOcr}
+        onToggleCandidate={onToggleCandidate}
+        onImportCandidates={onImportCandidates}
+      />
+    </View>
+  );
+}

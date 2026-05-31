@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Daily Ledger",
+    "slug": "mobile-expense-tracker",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.local.mobileexpensetracker"
+    },
+    "android": {
+      "package": "com.local.mobileexpensetracker"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-image-picker"
+    ]
+  }
+}
