@@ -1,6 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import {
   Account,
+  AppSettings,
   Budget,
   Category,
   DashboardSummary,
@@ -76,6 +77,10 @@ export async function migrate(db: ExpenseDatabase): Promise<void> {
       created_at TEXT NOT NULL,
       FOREIGN KEY(parsed_category_id) REFERENCES categories(id),
       FOREIGN KEY(transaction_id) REFERENCES transactions(id)
+    );
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
     );
   `);
 }
@@ -362,6 +367,34 @@ export async function exportTransactionsCsv(db: ExpenseDatabase): Promise<string
       .join(",")
   );
   return [header.join(","), ...rows].join("\n");
+}
+
+export async function getAppSettings(db: ExpenseDatabase): Promise<AppSettings> {
+  const rows = await db.getAllAsync<{ key: string; value: string }>("SELECT key, value FROM app_settings");
+  const values = new Map(rows.map((row) => [row.key, row.value]));
+  return {
+    qwenApiKey: values.get("qwenApiKey") ?? "",
+    receiptImageProvider: normalizeReceiptImageProvider(values.get("receiptImageProvider"))
+  };
+}
+
+export async function saveAppSettings(db: ExpenseDatabase, settings: AppSettings): Promise<void> {
+  await setSetting(db, "qwenApiKey", settings.qwenApiKey.trim());
+  await setSetting(db, "receiptImageProvider", settings.receiptImageProvider);
+}
+
+async function setSetting(db: ExpenseDatabase, key: string, value: string): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO app_settings (key, value)
+     VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    key,
+    value
+  );
+}
+
+function normalizeReceiptImageProvider(value: string | undefined): AppSettings["receiptImageProvider"] {
+  return value === "qwen" ? "qwen" : "qwen";
 }
 
 function makeId(prefix: string): string {

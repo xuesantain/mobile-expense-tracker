@@ -12,6 +12,7 @@ import {
   ExpenseDatabase,
   exportTransactionsCsv,
   getDashboardSummary,
+  getAppSettings,
   linkReceiptScan,
   listAccounts,
   listBudgets,
@@ -19,6 +20,7 @@ import {
   listTransactions,
   openExpenseDatabase,
   saveAccount,
+  saveAppSettings,
   saveCategory,
   saveReceiptScan,
   updateTransaction,
@@ -125,6 +127,9 @@ export default function App() {
     openExpenseDatabase()
       .then(async (database) => {
         setDb(database);
+        const settings = await getAppSettings(database);
+        setQwenApiKey(settings.qwenApiKey);
+        setReceiptImageProvider(settings.receiptImageProvider);
         await refresh(database, emptyFilters, selectedMonth);
       })
       .catch((error) => Alert.alert("数据库初始化失败", String(error)))
@@ -511,6 +516,21 @@ export default function App() {
     }
   }
 
+  async function updateQwenApiKey(value: string) {
+    const nextKey = value.trim();
+    setQwenApiKey(nextKey);
+    if (db) {
+      await saveAppSettings(db, { qwenApiKey: nextKey, receiptImageProvider });
+    }
+  }
+
+  async function updateReceiptImageProvider(value: ReceiptImageProvider) {
+    setReceiptImageProvider(value);
+    if (db) {
+      await saveAppSettings(db, { qwenApiKey, receiptImageProvider: value });
+    }
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.loading}>
@@ -588,8 +608,8 @@ export default function App() {
               transactions={transactions}
               qwenApiKey={qwenApiKey}
               receiptImageProvider={receiptImageProvider}
-              onQwenApiKeyChange={setQwenApiKey}
-              onReceiptImageProviderChange={setReceiptImageProvider}
+              onQwenApiKeyChange={updateQwenApiKey}
+              onReceiptImageProviderChange={updateReceiptImageProvider}
               onTestQwenKey={verifyQwenKey}
             />
           ) : null}

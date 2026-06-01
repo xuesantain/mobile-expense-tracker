@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { PrimaryButton, SectionTitle } from "../components/ui";
 import { styles } from "../styles";
 import { Account, Category, ReceiptImageProvider, Transaction } from "../types";
@@ -19,17 +19,35 @@ export function ProfileScreen({
   transactions: Transaction[];
   qwenApiKey: string;
   receiptImageProvider: ReceiptImageProvider;
-  onQwenApiKeyChange: (value: string) => void;
-  onReceiptImageProviderChange: (value: ReceiptImageProvider) => void;
+  onQwenApiKeyChange: (value: string) => Promise<void> | void;
+  onReceiptImageProviderChange: (value: ReceiptImageProvider) => Promise<void> | void;
   onTestQwenKey: (value: string) => void;
 }) {
   const [editingProvider, setEditingProvider] = useState<"qwen" | null>(null);
   const [draftQwenKey, setDraftQwenKey] = useState(qwenApiKey);
 
-  function saveCurrentKey() {
+  useEffect(() => {
+    setDraftQwenKey(qwenApiKey);
+  }, [qwenApiKey]);
+
+  async function saveCurrentKey() {
     if (editingProvider === "qwen") {
-      onQwenApiKeyChange(draftQwenKey);
-      onReceiptImageProviderChange("qwen");
+      const nextKey = draftQwenKey.trim();
+      if (!nextKey && qwenApiKey) {
+        Alert.alert("确认清空 API Key", "清空后票据图片识别会不可用，重新填写后才能继续使用。", [
+          { text: "取消", style: "cancel" },
+          { text: "清空", style: "destructive", onPress: () => void persistQwenKey(nextKey) }
+        ]);
+        return;
+      }
+      await persistQwenKey(nextKey);
+    }
+  }
+
+  async function persistQwenKey(nextKey: string) {
+    await onQwenApiKeyChange(nextKey);
+    if (receiptImageProvider !== "qwen") {
+      await onReceiptImageProviderChange("qwen");
     }
     setEditingProvider(null);
   }

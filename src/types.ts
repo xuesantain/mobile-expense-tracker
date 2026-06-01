@@ -90,6 +90,11 @@ export type TransactionFilters = {
 
 export type ReceiptImageProvider = "qwen";
 
+export type AppSettings = {
+  qwenApiKey: string;
+  receiptImageProvider: ReceiptImageProvider;
+};
+
 export type ManageableCategory = Omit<Category, "id" | "sortOrder"> & {
   id?: string;
 };
