@@ -21,6 +21,7 @@ export function TransactionRow({
 }) {
   const category = categories.find((item) => item.id === transaction.categoryId);
   const sign = transaction.type === "expense" ? "-" : "+";
+  const sourceLabel = transaction.source === "ocr" ? "截图识别" : "手动记账";
 
   return (
     <View style={styles.transactionRow}>
@@ -30,7 +31,7 @@ export function TransactionRow({
       <View style={styles.flex}>
         <Text style={styles.transactionTitle}>{transaction.merchant || category?.name || "账单"}</Text>
         <Text style={styles.transactionMeta}>
-          {transaction.date} · {category?.name ?? "未分类"}
+          {category?.name ?? "未分类"} · {sourceLabel}
         </Text>
         {transaction.note ? <Text style={styles.transactionNote}>{transaction.note}</Text> : null}
       </View>

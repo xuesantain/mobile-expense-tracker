@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { EmptyState } from "../components/ui";
+import { EmptyState, PrimaryButton } from "../components/ui";
 import { TransactionRow } from "../components/TransactionRow";
 import { styles } from "../styles";
 import { Account, Category, DashboardSummary, Transaction } from "../types";
@@ -105,13 +105,19 @@ export function HomeScreen({
         ) : null}
       </View>
       {transactions.length === 0 ? (
-        <EmptyState title="还没有账单" body="手动记一笔，或从票据识别结果确认入账。" />
+        <View>
+          <EmptyState title="还没有账单" body="手动记一笔，或从票据识别结果确认入账。" />
+          <PrimaryButton label="记一笔" onPress={onAdd} />
+        </View>
       ) : (
         grouped.map((group) => (
           <View key={group.date}>
             <View style={styles.dayGroupHeader}>
               <Text style={styles.dayGroupTitle}>{formatDateLabel(group.date)}</Text>
-              <Text style={styles.dayGroupAmount}>支出 {formatMoney(group.expense)}</Text>
+              <View style={styles.dayGroupTotals}>
+                {group.income > 0 ? <Text style={styles.dayGroupIncome}>收入 {formatMoney(group.income)}</Text> : null}
+                <Text style={styles.dayGroupAmount}>支出 {formatMoney(group.expense)}</Text>
+              </View>
             </View>
             {group.items.map((item) => (
               <TransactionRow
@@ -131,7 +137,7 @@ export function HomeScreen({
   );
 }
 
-function groupTransactionsByDate(transactions: Transaction[]): Array<{ date: string; expense: number; items: Transaction[] }> {
+function groupTransactionsByDate(transactions: Transaction[]): Array<{ date: string; expense: number; income: number; items: Transaction[] }> {
   const groups = new Map<string, Transaction[]>();
   for (const transaction of transactions) {
     groups.set(transaction.date, [...(groups.get(transaction.date) ?? []), transaction]);
@@ -140,9 +146,14 @@ function groupTransactionsByDate(transactions: Transaction[]): Array<{ date: str
     .sort(([left], [right]) => right.localeCompare(left))
     .map(([date, items]) => ({
       date,
-      items,
-      expense: Math.round(items.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0) * 100) / 100
+      items: [...items].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+      expense: roundMoney(items.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0)),
+      income: roundMoney(items.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0))
     }));
+}
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 function formatDateLabel(date: string): string {
