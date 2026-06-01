@@ -12,10 +12,12 @@ npm run typecheck
 npm test -- --runInBand
 CI=1 npx expo prebuild --platform android --no-install
 cd android
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
 
-构建成功后可以在 Actions 的 Artifacts 中下载 `mobile-expense-tracker-apk`，其中包含可直接安装的 `app-debug.apk`。
+构建成功后可以在 Actions 的 Artifacts 中下载 `mobile-expense-tracker-apk`，其中包含可直接安装的 release APK。
+
+不要下载 debug APK。debug APK 不内置 JS bundle，手机脱离 Metro 后会出现 `Unable to load script` 错误。
 
 这个流程不需要配置 `EXPO_TOKEN`，适合当前项目先快速产出测试版 APK。
 
@@ -86,5 +88,5 @@ npm run prebuild:android
 
 ```bash
 cd android
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```

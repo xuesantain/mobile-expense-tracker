@@ -50,13 +50,13 @@ jobs:
           test -f android/gradlew
           find android -maxdepth 2 -type f | sort | head -100
 
-      - name: Build debug APK
+      - name: Build release APK
         run: |
           set -euxo pipefail
           chmod +x android/gradlew
           cd android
           ./gradlew --version
-          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
+          ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
 
       - name: Upload build logs
         if: always()
@@ -71,5 +71,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mobile-expense-tracker-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
