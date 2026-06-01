@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import { TrendChart, TrendPoint } from "../components/TrendChart";
 import { EmptyState } from "../components/ui";
 import { colors, styles } from "../styles";
@@ -8,32 +8,46 @@ import { Category, CategorySpend, Transaction, TransactionType } from "../types"
 import { formatMoney } from "../utils/money";
 
 type TrendRange = "week" | "month" | "year";
+type PeriodOption = {
+  label: string;
+  start: string;
+  end: string;
+};
 
 export function StatsScreen({
   categories,
-  spendByCategory,
   month,
   transactions
 }: {
   categories: Category[];
-  spendByCategory: CategorySpend[];
   month: string;
   transactions: Transaction[];
 }) {
   const [metric, setMetric] = useState<TransactionType>("expense");
   const [range, setRange] = useState<TrendRange>("week");
-  const trendPoints = useMemo(() => buildTrendPoints(transactions, range, month), [transactions, range, month]);
+  const [selectedPeriodIndex, setSelectedPeriodIndex] = useState(-1);
+  const periodOptions = useMemo(() => buildPeriodOptions(range, month), [range, month]);
+  const activePeriodIndex = selectedPeriodIndex >= 0 && selectedPeriodIndex < periodOptions.length ? selectedPeriodIndex : periodOptions.length - 1;
+  const activePeriod = periodOptions[activePeriodIndex];
+  const filteredTransactions = useMemo(() => filterTransactionsByPeriod(transactions, activePeriod), [transactions, activePeriod]);
+  const trendPoints = useMemo(() => buildTrendPoints(filteredTransactions, range, activePeriod), [filteredTransactions, range, activePeriod]);
   const categoryIcons = useMemo(() => new Map(categories.map((category) => [category.id, category.icon])), [categories]);
-  const incomeByCategory = useMemo(() => categoryTotals(transactions, categories, month, "income"), [transactions, categories, month]);
-  const rankingItems = metric === "expense" ? spendByCategory : incomeByCategory;
+  const expenseByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "expense"), [filteredTransactions, categories]);
+  const incomeByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "income"), [filteredTransactions, categories]);
+  const rankingItems = metric === "expense" ? expenseByCategory : incomeByCategory;
   const rankingTotal = rankingItems.reduce((sum, item) => sum + item.amount, 0);
+
+  useEffect(() => {
+    setSelectedPeriodIndex(-1);
+  }, [range, month]);
 
   return (
     <View style={styles.statsPage}>
       <View style={styles.statsHero}>
-        <Text style={styles.statsHeroTitle} onPress={() => setMetric(metric === "expense" ? "income" : "expense")}>
-          {metric === "expense" ? "支出" : "收入"} ▼
-        </Text>
+        <Pressable style={styles.statsHeroToggle} onPress={() => setMetric(metric === "expense" ? "income" : "expense")}>
+          <Text style={styles.statsHeroTitle}>{metric === "expense" ? "支出" : "收入"}</Text>
+          <Ionicons name="swap-vertical" size={28} color={colors.text} />
+        </Pressable>
         <View style={styles.statsRangeSegment}>
           {[
             { label: "周", value: "week" },
@@ -43,7 +57,10 @@ export function StatsScreen({
             <Text
               key={item.value}
               style={[styles.statsRangeItem, range === item.value && styles.statsRangeItemActive]}
-              onPress={() => setRange(item.value as TrendRange)}
+              onPress={() => {
+                setRange(item.value as TrendRange);
+                setSelectedPeriodIndex(-1);
+              }}
             >
               {item.label}
             </Text>
@@ -52,10 +69,10 @@ export function StatsScreen({
       </View>
 
       <View style={styles.statsPeriodRow}>
-        {periodLabels(range).map((label, index, labels) => (
-          <Text key={`${range}-${label}`} style={[styles.statsPeriodText, index === labels.length - 1 && styles.statsPeriodTextActive]}>
-            {label}
-          </Text>
+        {periodOptions.map((period, index) => (
+          <Pressable key={`${range}-${period.label}-${period.start}`} onPress={() => setSelectedPeriodIndex(index)}>
+            <Text style={[styles.statsPeriodText, index === activePeriodIndex && styles.statsPeriodTextActive]}>{period.label}</Text>
+          </Pressable>
         ))}
       </View>
 
@@ -63,7 +80,7 @@ export function StatsScreen({
 
       <Text style={styles.statsRankingTitle}>{metric === "expense" ? "支出排行榜" : "收入排行榜"}</Text>
       {rankingItems.length === 0 ? (
-        <EmptyState title="暂无排行" body={`本月有${metric === "expense" ? "支出" : "收入"}后会展示分类排行。`} />
+        <EmptyState title="暂无排行" body={`${activePeriod?.label ?? "当前区间"}有${metric === "expense" ? "支出" : "收入"}后会展示分类排行。`} />
       ) : (
         <View style={styles.statsRankingList}>
           {rankingItems.map((item, index) => {
@@ -94,11 +111,11 @@ export function StatsScreen({
   );
 }
 
-function categoryTotals(transactions: Transaction[], categories: Category[], month: string, type: TransactionType): CategorySpend[] {
+function categoryTotals(transactions: Transaction[], categories: Category[], type: TransactionType): CategorySpend[] {
   const names = new Map(categories.map((category) => [category.id, category.name]));
   const totals = new Map<string, number>();
   for (const transaction of transactions) {
-    if (transaction.type === type && transaction.date.startsWith(month)) {
+    if (transaction.type === type) {
       totals.set(transaction.categoryId, (totals.get(transaction.categoryId) ?? 0) + transaction.amount);
     }
   }
@@ -111,11 +128,27 @@ function categoryTotals(transactions: Transaction[], categories: Category[], mon
     .sort((left, right) => right.amount - left.amount);
 }
 
-function buildTrendPoints(transactions: Transaction[], range: TrendRange, month: string): TrendPoint[] {
+function buildTrendPoints(transactions: Transaction[], range: TrendRange, period: PeriodOption | undefined): TrendPoint[] {
+  if (!period) {
+    return [];
+  }
+
   if (range === "month") {
-    const year = month.slice(0, 4);
+    const firstDay = Number(period.start.slice(8, 10));
+    const lastDay = Number(period.end.slice(8, 10));
+    return Array.from({ length: lastDay - firstDay + 1 }, (_, index) => {
+      const day = String(firstDay + index).padStart(2, "0");
+      const date = `${period.start.slice(0, 8)}${day}`;
+      return {
+        label: date.slice(5),
+        ...sumForPrefix(transactions, date)
+      };
+    });
+  }
+
+  if (range === "year") {
     return Array.from({ length: 12 }, (_, index) => {
-      const monthValue = `${year}-${String(index + 1).padStart(2, "0")}`;
+      const monthValue = `${period.start.slice(0, 4)}-${String(index + 1).padStart(2, "0")}`;
       return {
         label: `${index + 1}月`,
         ...sumForPrefix(transactions, monthValue)
@@ -123,18 +156,9 @@ function buildTrendPoints(transactions: Transaction[], range: TrendRange, month:
     });
   }
 
-  if (range === "year") {
-    const currentYear = Number(month.slice(0, 4));
-    return [currentYear - 1, currentYear].map((year) => ({
-      label: year === currentYear ? "今年" : "去年",
-      ...sumForPrefix(transactions, String(year))
-    }));
-  }
-
-  const endDate = monthEndDate(month);
   return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(endDate);
-    date.setDate(endDate.getDate() - (6 - index));
+    const date = fromIsoDate(period.start);
+    date.setDate(date.getDate() + index);
     const iso = toIsoDate(date);
     return {
       label: iso.slice(5),
@@ -156,6 +180,52 @@ function sumForPrefix(transactions: Transaction[], prefix: string): Pick<TrendPo
   };
 }
 
+function filterTransactionsByPeriod(transactions: Transaction[], period: PeriodOption | undefined): Transaction[] {
+  if (!period) {
+    return [];
+  }
+  return transactions.filter((transaction) => transaction.date >= period.start && transaction.date <= period.end);
+}
+
+function buildPeriodOptions(range: TrendRange, month: string): PeriodOption[] {
+  const monthEnd = monthEndDate(month);
+  if (range === "week") {
+    return Array.from({ length: 5 }, (_, index) => {
+      const end = new Date(monthEnd);
+      end.setDate(monthEnd.getDate() - (4 - index) * 7);
+      const start = new Date(end);
+      start.setDate(end.getDate() - 6);
+      return {
+        label: index === 4 ? "本周" : `${weekNumber(end)}周`,
+        start: toIsoDate(start),
+        end: toIsoDate(end)
+      };
+    });
+  }
+
+  if (range === "month") {
+    const year = Number(month.slice(0, 4));
+    const selectedMonthNumber = Number(month.slice(5, 7));
+    return Array.from({ length: selectedMonthNumber }, (_, index) => {
+      const monthNumber = index + 1;
+      const start = new Date(year, index, 1);
+      const end = new Date(year, monthNumber, 0);
+      return {
+        label: monthNumber === selectedMonthNumber ? "本月" : `${monthNumber}月`,
+        start: toIsoDate(start),
+        end: toIsoDate(end)
+      };
+    });
+  }
+
+  const currentYear = Number(month.slice(0, 4));
+  return [currentYear - 2, currentYear - 1, currentYear].map((year) => ({
+    label: year === currentYear ? "今年" : `${year}年`,
+    start: `${year}-01-01`,
+    end: `${year}-12-31`
+  }));
+}
+
 function monthEndDate(month: string): Date {
   const [year, monthIndex] = month.split("-").map(Number);
   const today = new Date();
@@ -167,6 +237,11 @@ function monthEndDate(month: string): Date {
   return new Date(year, monthIndex, 0);
 }
 
+function fromIsoDate(date: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function toIsoDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -174,12 +249,8 @@ function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function periodLabels(range: TrendRange): string[] {
-  if (range === "year") {
-    return ["去年", "今年"];
-  }
-  if (range === "month") {
-    return ["上月", "本月"];
-  }
-  return ["17周", "18周", "19周", "20周", "本周"];
+function weekNumber(date: Date): number {
+  const firstDay = new Date(date.getFullYear(), 0, 1);
+  const dayOffset = Math.floor((date.getTime() - firstDay.getTime()) / 86400000);
+  return Math.ceil((dayOffset + firstDay.getDay() + 1) / 7);
 }

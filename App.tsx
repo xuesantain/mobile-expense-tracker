@@ -560,7 +560,7 @@ export default function App() {
               onDeleteCategory={removeCategory}
             />
           ) : null}
-          {activeTab === "stats" ? <StatsScreen categories={categories} spendByCategory={spendByCategory} month={month} transactions={transactions} /> : null}
+          {activeTab === "stats" ? <StatsScreen categories={categories} month={month} transactions={transactions} /> : null}
           {activeTab === "discover" ? (
             <DiscoverScreen
               month={month}
