@@ -12,7 +12,8 @@ export function ProfileScreen({
   receiptImageProvider,
   onQwenApiKeyChange,
   onReceiptImageProviderChange,
-  onTestQwenKey
+  onTestQwenKey,
+  onExportData
 }: {
   categories: Category[];
   accounts: Account[];
@@ -22,6 +23,7 @@ export function ProfileScreen({
   onQwenApiKeyChange: (value: string) => Promise<void> | void;
   onReceiptImageProviderChange: (value: ReceiptImageProvider) => Promise<void> | void;
   onTestQwenKey: (value: string) => void;
+  onExportData: () => Promise<void> | void;
 }) {
   const [editingProvider, setEditingProvider] = useState<"qwen" | null>(null);
   const [draftQwenKey, setDraftQwenKey] = useState(qwenApiKey);
@@ -101,6 +103,13 @@ export function ProfileScreen({
       <SectionTitle title="记账管理" />
       <View style={styles.chartCard}>
         <Text style={styles.mutedText}>分类和账户已移到“记账”页，可以在记账时快速新增，减少来回切换。</Text>
+      </View>
+
+      <SectionTitle title="数据安全" />
+      <View style={styles.chartCard}>
+        <Text style={styles.statLabel}>导出账单 CSV</Text>
+        <Text style={styles.mutedText}>导出全部账单记录，方便备份、迁移或用表格软件继续分析。</Text>
+        <PrimaryButton label="导出全部账单" onPress={onExportData} />
       </View>
     </View>
   );

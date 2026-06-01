@@ -347,14 +347,22 @@ export default function App() {
       return;
     }
 
-    const csv = await exportTransactionsCsv(db);
-    const uri = `${FileSystem.documentDirectory}transactions-${month}.csv`;
-    await FileSystem.writeAsStringAsync(uri, csv);
+    try {
+      const csv = await exportTransactionsCsv(db);
+      if (csv.split("\n").length <= 1) {
+        Alert.alert("暂无账单", "先记录账单后再导出。");
+        return;
+      }
+      const uri = `${FileSystem.documentDirectory}transactions-${todayIso()}.csv`;
+      await FileSystem.writeAsStringAsync(uri, csv);
 
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, { mimeType: "text/csv", dialogTitle: "导出 CSV" });
-    } else {
-      Alert.alert("CSV 已生成", uri);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: "text/csv", dialogTitle: "导出 CSV" });
+      } else {
+        Alert.alert("CSV 已生成", uri);
+      }
+    } catch (error) {
+      Alert.alert("导出失败", String(error));
     }
   }
 
@@ -611,6 +619,7 @@ export default function App() {
               onQwenApiKeyChange={updateQwenApiKey}
               onReceiptImageProviderChange={updateReceiptImageProvider}
               onTestQwenKey={verifyQwenKey}
+              onExportData={exportCsv}
             />
           ) : null}
         </ScrollView>

@@ -359,14 +359,15 @@ export async function getDashboardSummary(db: ExpenseDatabase, month = currentMo
 }
 
 export async function exportTransactionsCsv(db: ExpenseDatabase): Promise<string> {
-  const transactions = await listTransactions(db);
+  const transactionRows = await db.getAllAsync<DbTransaction>("SELECT * FROM transactions ORDER BY date DESC, created_at DESC");
+  const transactions = transactionRows.map(mapTransaction);
   const header = ["date", "type", "amount", "category_id", "account_id", "merchant", "note", "source"];
-  const rows = transactions.map((item) =>
+  const csvRows = transactions.map((item) =>
     [item.date, item.type, item.amount, item.categoryId, item.accountId, item.merchant, item.note, item.source]
       .map(csvCell)
       .join(",")
   );
-  return [header.join(","), ...rows].join("\n");
+  return `\uFEFF${[header.join(","), ...csvRows].join("\n")}`;
 }
 
 export async function getAppSettings(db: ExpenseDatabase): Promise<AppSettings> {
