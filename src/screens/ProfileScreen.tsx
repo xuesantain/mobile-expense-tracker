@@ -27,6 +27,7 @@ export function ProfileScreen({
 }) {
   const [editingProvider, setEditingProvider] = useState<"qwen" | null>(null);
   const [draftQwenKey, setDraftQwenKey] = useState(qwenApiKey);
+  const [showQwenKey, setShowQwenKey] = useState(false);
 
   useEffect(() => {
     setDraftQwenKey(qwenApiKey);
@@ -51,6 +52,13 @@ export function ProfileScreen({
     if (receiptImageProvider !== "qwen") {
       await onReceiptImageProviderChange("qwen");
     }
+    setEditingProvider(null);
+    setShowQwenKey(false);
+  }
+
+  function cancelKeyEdit() {
+    setDraftQwenKey(qwenApiKey);
+    setShowQwenKey(false);
     setEditingProvider(null);
   }
 
@@ -90,11 +98,19 @@ export function ProfileScreen({
             <TextInput
               value={draftQwenKey}
               onChangeText={setDraftQwenKey}
-              secureTextEntry
+              secureTextEntry={!showQwenKey}
               placeholder="DashScope API Key"
               style={styles.input}
             />
-            <PrimaryButton label="测试 Key" onPress={() => onTestQwenKey(draftQwenKey)} />
+            <View style={styles.settingActionRow}>
+              <Text style={styles.linkText} onPress={() => setShowQwenKey((current) => !current)}>
+                {showQwenKey ? "隐藏 Key" : "查看 Key"}
+              </Text>
+              <Text style={styles.linkText} onPress={cancelKeyEdit}>
+                取消编辑
+              </Text>
+            </View>
+            <PrimaryButton label="测试 Key" onPress={() => onTestQwenKey(draftQwenKey)} disabled={!draftQwenKey.trim()} />
             <PrimaryButton label="保存并使用" onPress={saveCurrentKey} />
           </View>
         ) : null}

@@ -302,6 +302,7 @@ export const styles = StyleSheet.create({
   ocrSummaryText: { color: colors.text, fontSize: 12, fontWeight: "800" },
   settingRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.softBorder, gap: 12 },
   settingEditor: { marginTop: 14, gap: 10 },
+  settingActionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
   inlineAddPanel: { backgroundColor: colors.surface, borderRadius: 16, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: colors.softBorder }
   ,
   trendLegend: { flexDirection: "row", justifyContent: "flex-end", gap: 16, marginBottom: 10 },
