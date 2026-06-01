@@ -154,16 +154,6 @@ function buildTrendPoints(transactions: Transaction[], range: TrendRange, period
     });
   }
 
-  if (range === "year") {
-    return Array.from({ length: 12 }, (_, index) => {
-      const monthValue = `${period.start.slice(0, 4)}-${String(index + 1).padStart(2, "0")}`;
-      return {
-        label: `${index + 1}月`,
-        ...sumForPrefix(transactions, monthValue)
-      };
-    });
-  }
-
   return Array.from({ length: 7 }, (_, index) => {
     const date = fromIsoDate(period.start);
     date.setDate(date.getDate() + index);
