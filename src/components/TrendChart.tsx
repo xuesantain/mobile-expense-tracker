@@ -21,7 +21,8 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
   const values = points.map((point) => point[metric]);
   const total = Math.round(values.reduce((sum, value) => sum + value, 0) * 100) / 100;
   const average = points.length ? Math.round((total / points.length) * 100) / 100 : 0;
-  const maxValue = Math.max(...values, 1);
+  const actualMaxValue = Math.max(...values, 0);
+  const maxValue = Math.max(actualMaxValue, 1);
   const selected = selectedIndex === null ? null : points[selectedIndex] ?? null;
   const nodes = useMemo(() => layoutNodes(points, metric, maxValue, plotWidth), [points, metric, maxValue, plotWidth]);
 
@@ -36,7 +37,7 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
           <Text style={styles.trendMetaText}>总{metric === "expense" ? "支出" : "收入"}：{formatMoney(total)}</Text>
           <Text style={styles.trendMetaText}>平均值：{formatMoney(average)}</Text>
         </View>
-        <Text style={styles.trendMaxText}>{formatMoney(maxValue)}</Text>
+        <Text style={styles.trendMaxText}>{formatMoney(actualMaxValue)}</Text>
       </View>
       {selected ? (
         <Text style={styles.trendSelectedText}>

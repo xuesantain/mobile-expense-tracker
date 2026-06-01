@@ -101,6 +101,17 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     color: colors.text
   },
+  dateSelectButton: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 12 },
+  dateSelectText: { color: colors.text, fontSize: 16, fontWeight: "900" },
+  dateSelectHint: { color: colors.muted, fontSize: 12, fontWeight: "700", marginTop: 3 },
+  datePickerPanel: { backgroundColor: colors.surface, borderRadius: 16, padding: 12, marginTop: 10, borderWidth: 1, borderColor: colors.softBorder },
+  datePickerSection: { marginBottom: 10 },
+  datePickerTitle: { color: colors.muted, fontSize: 12, fontWeight: "800", marginBottom: 8 },
+  datePickerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  datePickerItem: { minWidth: 54, alignItems: "center", paddingHorizontal: 10, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.accentSoft },
+  datePickerItemActive: { backgroundColor: colors.primary },
+  datePickerItemText: { color: colors.text, fontWeight: "800" },
+  datePickerItemTextActive: { color: colors.text },
   smallInput: {
     minWidth: 112,
     flex: 1

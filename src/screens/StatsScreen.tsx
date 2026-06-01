@@ -30,7 +30,15 @@ export function StatsScreen({
   const activePeriodIndex = selectedPeriodIndex >= 0 && selectedPeriodIndex < periodOptions.length ? selectedPeriodIndex : periodOptions.length - 1;
   const activePeriod = periodOptions[activePeriodIndex];
   const filteredTransactions = useMemo(() => filterTransactionsByPeriod(transactions, activePeriod), [transactions, activePeriod]);
-  const trendPoints = useMemo(() => buildTrendPoints(filteredTransactions, range, activePeriod), [filteredTransactions, range, activePeriod]);
+  const trendPoints = useMemo(() => {
+    if (range === "year") {
+      return periodOptions.map((period) => ({
+        label: period.label,
+        ...sumForPeriod(transactions, period)
+      }));
+    }
+    return buildTrendPoints(filteredTransactions, range, activePeriod);
+  }, [activePeriod, filteredTransactions, periodOptions, range, transactions]);
   const categoryIcons = useMemo(() => new Map(categories.map((category) => [category.id, category.icon])), [categories]);
   const expenseByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "expense"), [filteredTransactions, categories]);
   const incomeByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "income"), [filteredTransactions, categories]);
@@ -171,6 +179,19 @@ function sumForPrefix(transactions: Transaction[], prefix: string): Pick<TrendPo
   const totals = { expense: 0, income: 0 };
   for (const transaction of transactions) {
     if (transaction.date.startsWith(prefix)) {
+      totals[transaction.type] += transaction.amount;
+    }
+  }
+  return {
+    expense: Math.round(totals.expense * 100) / 100,
+    income: Math.round(totals.income * 100) / 100
+  };
+}
+
+function sumForPeriod(transactions: Transaction[], period: PeriodOption): Pick<TrendPoint, "expense" | "income"> {
+  const totals = { expense: 0, income: 0 };
+  for (const transaction of transactions) {
+    if (transaction.date >= period.start && transaction.date <= period.end) {
       totals[transaction.type] += transaction.amount;
     }
   }
