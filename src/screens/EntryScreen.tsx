@@ -3,6 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { ChoiceWrap, Field, PrimaryButton, Segment } from "../components/ui";
 import { styles } from "../styles";
 import { Category, DraftTransaction, ManageableCategory, TransactionType } from "../types";
+import { todayIso } from "../utils/date";
 
 export function EntryScreen({
   draft,
@@ -97,23 +98,42 @@ export function EntryScreen({
         </Pressable>
         {showDatePicker ? (
           <View style={styles.datePickerPanel}>
+            <View style={styles.datePickerHeader}>
+              <Text style={styles.datePickerQuickText} onPress={() => onDraftChange({ ...draft, date: todayIso() })}>
+                今天
+              </Text>
+              <Text style={styles.datePickerDoneText} onPress={() => setShowDatePicker(false)}>
+                完成
+              </Text>
+            </View>
             <DateOptionRow
               title="年份"
-              options={dateOptions.years.map((year) => ({ label: `${year}年`, value: String(year) }))}
+              options={dateOptions.years.map((year) => ({ label: `${year}年`, value: String(year), disabled: year > dateOptions.today.year }))}
               value={String(selectedDate.year)}
               onChange={(year) => onDraftChange({ ...draft, date: normalizeDate(Number(year), selectedDate.month, selectedDate.day) })}
             />
             <DateOptionRow
               title="月份"
-              options={dateOptions.months.map((month) => ({ label: `${month}月`, value: String(month) }))}
+              options={dateOptions.months.map((month) => ({
+                label: `${month}月`,
+                value: String(month),
+                disabled: selectedDate.year === dateOptions.today.year && month > dateOptions.today.month
+              }))}
               value={String(selectedDate.month)}
               onChange={(month) => onDraftChange({ ...draft, date: normalizeDate(selectedDate.year, Number(month), selectedDate.day) })}
             />
             <DateOptionRow
               title="日期"
-              options={dateOptions.days.map((day) => ({ label: `${day}`, value: String(day) }))}
+              options={dateOptions.days.map((day) => ({
+                label: `${day}`,
+                value: String(day),
+                disabled: selectedDate.year === dateOptions.today.year && selectedDate.month === dateOptions.today.month && day > dateOptions.today.day
+              }))}
               value={String(selectedDate.day)}
-              onChange={(day) => onDraftChange({ ...draft, date: normalizeDate(selectedDate.year, selectedDate.month, Number(day)) })}
+              onChange={(day) => {
+                onDraftChange({ ...draft, date: normalizeDate(selectedDate.year, selectedDate.month, Number(day)) });
+                setShowDatePicker(false);
+              }}
             />
           </View>
         ) : null}
@@ -134,7 +154,7 @@ function DateOptionRow({
   onChange
 }: {
   title: string;
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: string; value: string; disabled?: boolean }>;
   value: string;
   onChange: (value: string) => void;
 }) {
@@ -143,8 +163,16 @@ function DateOptionRow({
       <Text style={styles.datePickerTitle}>{title}</Text>
       <View style={styles.datePickerGrid}>
         {options.map((option) => (
-          <Pressable key={option.value} style={[styles.datePickerItem, value === option.value && styles.datePickerItemActive]} onPress={() => onChange(option.value)}>
-            <Text style={[styles.datePickerItemText, value === option.value && styles.datePickerItemTextActive]}>{option.label}</Text>
+          <Pressable
+            key={option.value}
+            style={[styles.datePickerItem, value === option.value && styles.datePickerItemActive, option.disabled && styles.datePickerItemDisabled]}
+            onPress={() => {
+              if (!option.disabled) {
+                onChange(option.value);
+              }
+            }}
+          >
+            <Text style={[styles.datePickerItemText, value === option.value && styles.datePickerItemTextActive, option.disabled && styles.datePickerItemTextDisabled]}>{option.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -154,12 +182,12 @@ function DateOptionRow({
 
 function buildDateOptions(date: string) {
   const selected = parseDateParts(date);
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 6 }, (_, index) => currentYear - 5 + index);
+  const today = parseDateParts(todayIso());
+  const years = Array.from({ length: 6 }, (_, index) => today.year - 5 + index);
   const months = Array.from({ length: 12 }, (_, index) => index + 1);
   const daysInMonth = new Date(selected.year, selected.month, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, index) => index + 1);
-  return { years, months, days };
+  return { years, months, days, today };
 }
 
 function parseDateParts(date: string): { year: number; month: number; day: number } {
@@ -175,7 +203,9 @@ function parseDateParts(date: string): { year: number; month: number; day: numbe
 function normalizeDate(year: number, month: number, day: number): string {
   const daysInMonth = new Date(year, month, 0).getDate();
   const normalizedDay = Math.min(day, daysInMonth);
-  return `${year}-${String(month).padStart(2, "0")}-${String(normalizedDay).padStart(2, "0")}`;
+  const date = `${year}-${String(month).padStart(2, "0")}-${String(normalizedDay).padStart(2, "0")}`;
+  const today = todayIso();
+  return date > today ? today : date;
 }
 
 function iconLabel(icon: string): string {

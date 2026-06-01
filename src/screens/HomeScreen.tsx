@@ -41,6 +41,7 @@ export function HomeScreen({
   const grouped = groupTransactionsByDate(transactions);
   const monthLabel = formatMonthLabel(month);
   const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentYear = Number(currentMonth.slice(0, 4));
 
   return (
     <View>
@@ -67,7 +68,16 @@ export function HomeScreen({
             <View style={styles.monthPickerHeader}>
               <Text style={styles.monthSwitchText} onPress={() => setPickerYear((year) => year - 1)}>上一年</Text>
               <Text style={styles.monthPickerYear}>{pickerYear}年</Text>
-              <Text style={styles.monthSwitchText} onPress={() => setPickerYear((year) => year + 1)}>下一年</Text>
+              <Text
+                style={[styles.monthSwitchText, pickerYear >= currentYear && styles.monthSwitchTextDisabled]}
+                onPress={() => {
+                  if (pickerYear < currentYear) {
+                    setPickerYear((year) => year + 1);
+                  }
+                }}
+              >
+                下一年
+              </Text>
             </View>
             <View style={styles.monthGrid}>
               {Array.from({ length: 12 }, (_, index) => {
