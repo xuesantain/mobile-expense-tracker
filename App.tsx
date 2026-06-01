@@ -392,6 +392,13 @@ export default function App() {
       Alert.alert("未选择图片", "请先选择票据或账单截图。");
       return;
     }
+    if (!qwenApiKey.trim()) {
+      Alert.alert("需要配置 Qwen API Key", "请先到“我的”页填写并保存 API Key，再进行图片识别。", [
+        { text: "稍后", style: "cancel" },
+        { text: "去设置", onPress: () => setActiveTab("profile") }
+      ]);
+      return;
+    }
     if (receiptImageProvider === "qwen" && qwenApiKey.trim()) {
       await parseOcrCandidate();
       return;
@@ -598,6 +605,7 @@ export default function App() {
               ocrText={ocrText}
               ocrImageUri={ocrImageUri}
               extractingText={extractingText}
+              hasImageRecognitionKey={Boolean(qwenApiKey.trim())}
               candidates={receiptCandidates}
               onBudgetAmountChange={setBudgetAmount}
               onSaveBudget={saveBudget}
@@ -607,6 +615,7 @@ export default function App() {
               onParseOcr={parseOcrCandidate}
               onToggleCandidate={toggleReceiptCandidate}
               onImportCandidates={importReceiptCandidates}
+              onOpenSettings={() => setActiveTab("profile")}
             />
           ) : null}
           {activeTab === "profile" ? (

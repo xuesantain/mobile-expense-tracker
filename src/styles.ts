@@ -212,6 +212,8 @@ export const styles = StyleSheet.create({
   uriText: { color: colors.muted, fontSize: 12, marginBottom: 10 },
   empty: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.softBorder },
   emptyTitle: { color: colors.text, fontWeight: "800", marginBottom: 4 },
+  noticeBox: { backgroundColor: colors.primarySoft, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#ffe678", marginVertical: 12, gap: 8 },
+  noticeTitle: { color: colors.text, fontSize: 15, fontWeight: "900" },
   mutedText: { color: colors.muted, lineHeight: 20 },
   tabBar: {
     flexDirection: "row",

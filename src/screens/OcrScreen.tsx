@@ -9,17 +9,20 @@ export function OcrScreen({
   text,
   imageUri,
   extracting,
+  hasImageRecognitionKey,
   candidates,
   onTextChange,
   onPickImage,
   onExtractText,
   onParse,
   onToggleCandidate,
-  onImportCandidates
+  onImportCandidates,
+  onOpenSettings
 }: {
   text: string;
   imageUri: string | null;
   extracting: boolean;
+  hasImageRecognitionKey: boolean;
   candidates: ReceiptImportCandidate[];
   onTextChange: (value: string) => void;
   onPickImage: () => void;
@@ -27,6 +30,7 @@ export function OcrScreen({
   onParse: () => void;
   onToggleCandidate: (id: string) => void;
   onImportCandidates: () => void;
+  onOpenSettings: () => void;
 }) {
   const selectedCount = candidates.filter((item) => item.selected && item.amount && item.date && !item.duplicateOfTransactionId).length;
   const duplicateCount = candidates.filter((item) => item.duplicateOfTransactionId).length;
@@ -36,6 +40,15 @@ export function OcrScreen({
     <View>
       <Text style={styles.panelTitle}>票据识别</Text>
       <Text style={styles.mutedText}>先选择票据图片并提取文字，或直接粘贴 OCR 文本。解析出的金额、日期、商户和分类仍需确认后才会入账。</Text>
+      {!hasImageRecognitionKey ? (
+        <View style={styles.noticeBox}>
+          <Text style={styles.noticeTitle}>需要先配置 Qwen API Key</Text>
+          <Text style={styles.mutedText}>配置后才能直接识别微信、支付宝或票据截图；未配置时仍可粘贴 OCR 文本后本地解析。</Text>
+          <Text style={styles.linkText} onPress={onOpenSettings}>
+            去设置 API Key
+          </Text>
+        </View>
+      ) : null}
       <Pressable style={styles.secondaryButton} onPress={onPickImage}>
         <Ionicons name="image" size={18} color="#2563eb" />
         <Text style={styles.secondaryButtonText}>{imageUri ? "已选择图片，重新选择" : "选择票据截图"}</Text>
@@ -45,9 +58,9 @@ export function OcrScreen({
           <Text style={styles.uriText} numberOfLines={1}>
             {imageUri}
           </Text>
-          <Pressable style={[styles.secondaryButton, extracting && styles.disabledButton]} onPress={onExtractText} disabled={extracting}>
+          <Pressable style={[styles.secondaryButton, (extracting || !hasImageRecognitionKey) && styles.disabledButton]} onPress={onExtractText} disabled={extracting || !hasImageRecognitionKey}>
             <Ionicons name="scan" size={18} color="#2563eb" />
-            <Text style={styles.secondaryButtonText}>{extracting ? "正在提取..." : "从图片提取文字"}</Text>
+            <Text style={styles.secondaryButtonText}>{extracting ? "正在提取..." : hasImageRecognitionKey ? "从图片提取文字" : "先配置 API Key"}</Text>
           </Pressable>
         </>
       ) : null}

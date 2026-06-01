@@ -12,6 +12,7 @@ export function DiscoverScreen({
   ocrText,
   ocrImageUri,
   extractingText,
+  hasImageRecognitionKey,
   candidates,
   onBudgetAmountChange,
   onSaveBudget,
@@ -20,7 +21,8 @@ export function DiscoverScreen({
   onExtractText,
   onParseOcr,
   onToggleCandidate,
-  onImportCandidates
+  onImportCandidates,
+  onOpenSettings
 }: {
   month: string;
   budgetAmount: string;
@@ -29,6 +31,7 @@ export function DiscoverScreen({
   ocrText: string;
   ocrImageUri: string | null;
   extractingText: boolean;
+  hasImageRecognitionKey: boolean;
   candidates: ReceiptImportCandidate[];
   onBudgetAmountChange: (value: string) => void;
   onSaveBudget: () => void;
@@ -38,6 +41,7 @@ export function DiscoverScreen({
   onParseOcr: () => void;
   onToggleCandidate: (id: string) => void;
   onImportCandidates: () => void;
+  onOpenSettings: () => void;
 }) {
   return (
     <View>
@@ -46,6 +50,7 @@ export function DiscoverScreen({
         text={ocrText}
         imageUri={ocrImageUri}
         extracting={extractingText}
+        hasImageRecognitionKey={hasImageRecognitionKey}
         candidates={candidates}
         onTextChange={onOcrTextChange}
         onPickImage={onPickImage}
@@ -53,6 +58,7 @@ export function DiscoverScreen({
         onParse={onParseOcr}
         onToggleCandidate={onToggleCandidate}
         onImportCandidates={onImportCandidates}
+        onOpenSettings={onOpenSettings}
       />
     </View>
   );
