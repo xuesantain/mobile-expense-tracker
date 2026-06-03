@@ -1,7 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { PrimaryButton, SectionTitle } from "../components/ui";
-import { styles } from "../styles";
+import { colors, styles } from "../styles";
 import { Account, Category, ReceiptImageProvider, Transaction } from "../types";
 
 export function ProfileScreen({
@@ -82,19 +83,22 @@ export function ProfileScreen({
         </View>
       </View>
 
-      <SectionTitle title="AI 识别设置" />
+      <SectionTitle title="AI 识别" />
       <View style={styles.chartCard}>
-        <Text style={styles.statLabel}>图片识别模型</Text>
-        <Pressable style={styles.settingRow} onPress={() => setEditingProvider("qwen")}>
-          <View>
-            <Text style={styles.statLabel}>Qwen3-VL-Flash 图片识别</Text>
-            <Text style={styles.mutedText}>{qwenApiKey ? "已配置 Key" : "未配置，点击填写 DashScope API Key"}</Text>
+        <Pressable style={styles.settingRow} onPress={() => setEditingProvider(editingProvider === "qwen" ? null : "qwen")}>
+          <View style={styles.settingLeading}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="scan" size={20} color={colors.text} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.settingTitle}>Qwen3-VL-Flash</Text>
+              <Text style={styles.mutedText}>{qwenApiKey ? "已保存 DashScope API Key" : "用于票据、微信和支付宝截图识别"}</Text>
+            </View>
           </View>
-          <Text style={styles.statValue}>{receiptImageProvider === "qwen" ? "使用中" : "设置"}</Text>
+          <Text style={[styles.settingBadge, qwenApiKey && styles.settingBadgeActive]}>{qwenApiKey ? "已启用" : "设置"}</Text>
         </Pressable>
         {editingProvider ? (
           <View style={styles.settingEditor}>
-            <Text style={styles.statLabel}>填写 Qwen API Key</Text>
             <TextInput
               value={draftQwenKey}
               onChangeText={setDraftQwenKey}
@@ -110,22 +114,48 @@ export function ProfileScreen({
                 取消编辑
               </Text>
             </View>
-            <PrimaryButton label="测试 Key" onPress={() => onTestQwenKey(draftQwenKey)} disabled={!draftQwenKey.trim()} />
-            <PrimaryButton label="保存并使用" onPress={saveCurrentKey} />
+            <View style={styles.wrapRow}>
+              <View style={styles.flex}>
+                <PrimaryButton label="测试 Key" onPress={() => onTestQwenKey(draftQwenKey)} disabled={!draftQwenKey.trim()} />
+              </View>
+              <View style={styles.flex}>
+                <PrimaryButton label="保存并使用" onPress={saveCurrentKey} />
+              </View>
+            </View>
           </View>
         ) : null}
       </View>
 
-      <SectionTitle title="记账管理" />
+      <SectionTitle title="数据" />
       <View style={styles.chartCard}>
-        <Text style={styles.mutedText}>分类和账户已移到“记账”页，可以在记账时快速新增，减少来回切换。</Text>
+        <Pressable style={styles.settingRow} onPress={onExportData}>
+          <View style={styles.settingLeading}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="download-outline" size={20} color={colors.text} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.settingTitle}>导出账单 CSV</Text>
+              <Text style={styles.mutedText}>备份、迁移或用表格软件继续分析。</Text>
+            </View>
+          </View>
+          <Text style={styles.settingBadge}>导出</Text>
+        </Pressable>
       </View>
 
-      <SectionTitle title="数据安全" />
+      <SectionTitle title="记账管理" />
       <View style={styles.chartCard}>
-        <Text style={styles.statLabel}>导出账单 CSV</Text>
-        <Text style={styles.mutedText}>导出全部账单记录，方便备份、迁移或用表格软件继续分析。</Text>
-        <PrimaryButton label="导出全部账单" onPress={onExportData} />
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeading}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="albums-outline" size={20} color={colors.text} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.settingTitle}>分类和账户</Text>
+              <Text style={styles.mutedText}>已放到“记账”页，可在录入时快速新增。</Text>
+            </View>
+          </View>
+          <Text style={styles.settingBadge}>记账页</Text>
+        </View>
       </View>
     </View>
   );

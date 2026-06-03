@@ -307,6 +307,11 @@ export const styles = StyleSheet.create({
   ocrSummaryRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 10, marginBottom: 4 },
   ocrSummaryText: { color: colors.text, fontSize: 12, fontWeight: "800" },
   settingRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.softBorder, gap: 12 },
+  settingLeading: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  settingIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
+  settingTitle: { color: colors.text, fontSize: 15, fontWeight: "900", marginBottom: 2 },
+  settingBadge: { color: colors.text, fontWeight: "900", backgroundColor: colors.accentSoft, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
+  settingBadgeActive: { backgroundColor: colors.primary },
   settingEditor: { marginTop: 14, gap: 10 },
   settingActionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
   inlineAddPanel: { backgroundColor: colors.surface, borderRadius: 16, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: colors.softBorder }
