@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ChoiceWrap, Field, PrimaryButton, Segment } from "../components/ui";
 import { styles } from "../styles";
@@ -38,6 +38,7 @@ export function EntryScreen({
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const visibleCategories = categories.filter((item) => item.type === draft.type);
   const baseCategories = visibleCategories.filter((item) => !(draft.type === "expense" && item.id === "cat-other-expense"));
   const compactCategories = showAllCategories ? baseCategories : baseCategories.slice(0, 8);
@@ -52,6 +53,13 @@ export function EntryScreen({
   const amountValue = parseAmount(draft.amount);
   const canSubmit = amountValue > 0 && Boolean(draft.categoryId);
   const modeNotice = getModeNotice(entryMode, draft.source);
+  const hasOptionalDetails = Boolean(draft.note.trim() || draft.merchant.trim());
+
+  useEffect(() => {
+    if (editing || entryMode === "copy" || entryMode === "ocr" || hasOptionalDetails) {
+      setShowOptionalDetails(true);
+    }
+  }, [editing, entryMode, hasOptionalDetails]);
 
   return (
     <View>
@@ -168,8 +176,16 @@ export function EntryScreen({
         ) : null}
       </View>
 
-      <Field label="备注" value={draft.note} placeholder="可选" onChangeText={(note) => onDraftChange({ ...draft, note })} />
-      <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
+      <Pressable style={styles.optionalDetailsToggle} onPress={() => setShowOptionalDetails((current) => !current)}>
+        <Text style={styles.optionalDetailsTitle}>备注和商户</Text>
+        <Text style={styles.optionalDetailsHint}>{showOptionalDetails ? "收起" : hasOptionalDetails ? "已填写" : "可选"}</Text>
+      </Pressable>
+      {showOptionalDetails ? (
+        <>
+          <Field label="备注" value={draft.note} placeholder="可选" onChangeText={(note) => onDraftChange({ ...draft, note })} />
+          <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
+        </>
+      ) : null}
       <PrimaryButton label={editing ? "保存修改" : draft.source === "ocr" ? "确认票据入账" : "保存账单"} onPress={onSubmit} disabled={!canSubmit} />
       {editing ? <PrimaryButton label="取消编辑" onPress={onCancelEdit} /> : null}
     </View>
