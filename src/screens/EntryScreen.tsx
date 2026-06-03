@@ -28,7 +28,7 @@ export function EntryScreen({
   categories: Category[];
   onDraftChange: (draft: DraftTransaction) => void;
   onTypeChange: (type: TransactionType) => void;
-  onSubmit: () => void;
+  onSubmit: (options?: { stayOnEntry?: boolean }) => void;
   onCancelEdit: () => void;
   categoryDraft: ManageableCategory;
   onCategoryDraftChange: (draft: ManageableCategory) => void;
@@ -54,6 +54,7 @@ export function EntryScreen({
   const canSubmit = amountValue > 0 && Boolean(draft.categoryId);
   const modeNotice = getModeNotice(entryMode, draft.source);
   const hasOptionalDetails = Boolean(draft.note.trim() || draft.merchant.trim());
+  const canStayAfterSave = !editing && draft.source === "manual";
 
   useEffect(() => {
     if (editing || entryMode === "copy" || entryMode === "ocr" || hasOptionalDetails) {
@@ -195,7 +196,16 @@ export function EntryScreen({
           <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
         </>
       ) : null}
-      <PrimaryButton label={editing ? "保存修改" : draft.source === "ocr" ? "确认票据入账" : "保存账单"} onPress={onSubmit} disabled={!canSubmit} />
+      <PrimaryButton
+        label={editing ? "保存修改" : draft.source === "ocr" ? "确认票据入账" : "保存并继续"}
+        onPress={() => onSubmit({ stayOnEntry: canStayAfterSave })}
+        disabled={!canSubmit}
+      />
+      {canStayAfterSave && canSubmit ? (
+        <Text style={styles.entryViewRecordsAction} onPress={() => onSubmit({ stayOnEntry: false })}>
+          保存后查看明细
+        </Text>
+      ) : null}
       {editing ? <PrimaryButton label="取消编辑" onPress={onCancelEdit} /> : null}
     </View>
   );

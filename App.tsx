@@ -205,7 +205,7 @@ export default function App() {
     });
   }
 
-  async function submitTransaction() {
+  async function submitTransaction(options: { stayOnEntry?: boolean } = {}) {
     if (!db) {
       return;
     }
@@ -239,11 +239,24 @@ export default function App() {
       }
     }
 
-    resetDraft(draft.accountId);
+    if (options.stayOnEntry && !wasEditing && draft.source === "manual") {
+      setDraft((current) => ({
+        ...current,
+        amount: "",
+        note: "",
+        merchant: "",
+        source: "manual"
+      }));
+      setEntryMode("new");
+    } else {
+      resetDraft(draft.accountId);
+    }
     setOcrText("");
     setOcrImageUri(null);
     await refresh(db, filters, month);
-    setActiveTab("records");
+    if (!options.stayOnEntry || wasEditing || draft.source !== "manual") {
+      setActiveTab("records");
+    }
     showToast(wasEditing ? "修改已保存" : "账单已保存");
   }
 

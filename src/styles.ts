@@ -157,6 +157,7 @@ export const styles = StyleSheet.create({
   optionalDetailsToggle: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 12, marginBottom: 14 },
   optionalDetailsTitle: { color: colors.text, fontWeight: "900" },
   optionalDetailsHint: { color: colors.muted, fontSize: 12, fontWeight: "800" },
+  entryViewRecordsAction: { alignSelf: "center", color: colors.muted, fontSize: 13, fontWeight: "900", paddingVertical: 12 },
   primaryButton: { backgroundColor: colors.primary, borderRadius: 16, alignItems: "center", paddingVertical: 15, marginTop: 4 },
   primaryButtonDisabled: { backgroundColor: "#e5e7eb" },
   pressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
