@@ -93,6 +93,7 @@ export const styles = StyleSheet.create({
     fontWeight: "800",
     marginBottom: 14
   },
+  formHint: { color: colors.muted, fontSize: 12, fontWeight: "700", marginTop: -8, marginBottom: 12 },
   fieldBlock: { marginBottom: 14 },
   label: { color: "#42455f", fontWeight: "800", marginBottom: 8 },
   input: {

@@ -4,6 +4,7 @@ import { ChoiceWrap, Field, PrimaryButton, Segment } from "../components/ui";
 import { styles } from "../styles";
 import { Category, DraftTransaction, ManageableCategory, TransactionType } from "../types";
 import { todayIso } from "../utils/date";
+import { parseAmount } from "../utils/money";
 
 export function EntryScreen({
   draft,
@@ -42,6 +43,8 @@ export function EntryScreen({
   ];
   const selectedDate = parseDateParts(draft.date);
   const dateOptions = useMemo(() => buildDateOptions(draft.date), [draft.date]);
+  const amountValue = parseAmount(draft.amount);
+  const canSubmit = amountValue > 0 && Boolean(draft.categoryId);
 
   return (
     <View>
@@ -60,6 +63,7 @@ export function EntryScreen({
         placeholder="金额，例如 28.50"
         style={styles.amountInput}
       />
+      {!canSubmit ? <Text style={styles.formHint}>输入大于 0 的金额后即可保存。</Text> : null}
 
       <ChoiceWrap
         title="分类"
@@ -141,7 +145,7 @@ export function EntryScreen({
 
       <Field label="备注" value={draft.note} placeholder="可选" onChangeText={(note) => onDraftChange({ ...draft, note })} />
       <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
-      <PrimaryButton label={editing ? "保存修改" : draft.source === "ocr" ? "确认票据入账" : "保存账单"} onPress={onSubmit} />
+      <PrimaryButton label={editing ? "保存修改" : draft.source === "ocr" ? "确认票据入账" : "保存账单"} onPress={onSubmit} disabled={!canSubmit} />
       {editing ? <PrimaryButton label="取消编辑" onPress={onCancelEdit} /> : null}
     </View>
   );
