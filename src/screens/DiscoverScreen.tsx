@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { BudgetScreen } from "./BudgetScreen";
 import { OcrScreen } from "./OcrScreen";
 import { styles } from "../styles";
-import { Budget, DashboardSummary, ReceiptImportCandidate } from "../types";
+import { Budget, Category, DashboardSummary, ReceiptImportCandidate } from "../types";
 
 export function DiscoverScreen({
   month,
@@ -14,6 +14,7 @@ export function DiscoverScreen({
   extractingText,
   hasImageRecognitionKey,
   candidates,
+  categories,
   onBudgetAmountChange,
   onSaveBudget,
   onOcrTextChange,
@@ -21,6 +22,7 @@ export function DiscoverScreen({
   onExtractText,
   onParseOcr,
   onToggleCandidate,
+  onUpdateCandidate,
   onImportCandidates,
   onOpenSettings
 }: {
@@ -33,6 +35,7 @@ export function DiscoverScreen({
   extractingText: boolean;
   hasImageRecognitionKey: boolean;
   candidates: ReceiptImportCandidate[];
+  categories: Category[];
   onBudgetAmountChange: (value: string) => void;
   onSaveBudget: () => void;
   onOcrTextChange: (value: string) => void;
@@ -40,6 +43,7 @@ export function DiscoverScreen({
   onExtractText: () => void;
   onParseOcr: () => void;
   onToggleCandidate: (id: string) => void;
+  onUpdateCandidate: (id: string, patch: Partial<ReceiptImportCandidate>) => void;
   onImportCandidates: () => void;
   onOpenSettings: () => void;
 }) {
@@ -52,11 +56,13 @@ export function DiscoverScreen({
         extracting={extractingText}
         hasImageRecognitionKey={hasImageRecognitionKey}
         candidates={candidates}
+        categories={categories}
         onTextChange={onOcrTextChange}
         onPickImage={onPickImage}
         onExtractText={onExtractText}
         onParse={onParseOcr}
         onToggleCandidate={onToggleCandidate}
+        onUpdateCandidate={onUpdateCandidate}
         onImportCandidates={onImportCandidates}
         onOpenSettings={onOpenSettings}
       />

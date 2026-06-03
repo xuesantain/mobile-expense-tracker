@@ -299,6 +299,8 @@ export const styles = StyleSheet.create({
   rankingBarFill: { height: 8, borderRadius: 999, backgroundColor: colors.primary },
   receiptCandidateRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.softBorder },
   receiptCandidateCheck: { width: 26, alignItems: "center" },
+  receiptCandidateEditor: { marginTop: 10, gap: 8 },
+  receiptCandidateInput: { minWidth: 132, flex: 1 },
   duplicateText: { color: colors.danger, fontSize: 12, marginTop: 4, fontWeight: "700" },
   warningText: { color: colors.warning, fontSize: 12, marginTop: 4, fontWeight: "700" },
   ocrSummaryRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 10, marginBottom: 4 },

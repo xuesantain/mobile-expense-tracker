@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { PrimaryButton } from "../components/ui";
+import { ChoiceWrap, PrimaryButton } from "../components/ui";
 import { styles } from "../styles";
-import { ReceiptImportCandidate } from "../types";
-import { formatMoney } from "../utils/money";
+import { Category, ReceiptImportCandidate } from "../types";
+import { formatMoney, parseAmount } from "../utils/money";
 
 export function OcrScreen({
   text,
@@ -11,11 +11,13 @@ export function OcrScreen({
   extracting,
   hasImageRecognitionKey,
   candidates,
+  categories,
   onTextChange,
   onPickImage,
   onExtractText,
   onParse,
   onToggleCandidate,
+  onUpdateCandidate,
   onImportCandidates,
   onOpenSettings
 }: {
@@ -24,11 +26,13 @@ export function OcrScreen({
   extracting: boolean;
   hasImageRecognitionKey: boolean;
   candidates: ReceiptImportCandidate[];
+  categories: Category[];
   onTextChange: (value: string) => void;
   onPickImage: () => void;
   onExtractText: () => void;
   onParse: () => void;
   onToggleCandidate: (id: string) => void;
+  onUpdateCandidate: (id: string, patch: Partial<ReceiptImportCandidate>) => void;
   onImportCandidates: () => void;
   onOpenSettings: () => void;
 }) {
@@ -95,8 +99,40 @@ export function OcrScreen({
                 <Text style={styles.transactionMeta}>
                   {item.date ?? "缺少日期"} {item.time ?? ""} · {item.note}
                 </Text>
-                {!item.amount || !item.date ? <Text style={styles.warningText}>信息不完整，请取消选择或手动补充后再导入。</Text> : null}
+                {!item.amount || !item.date ? <Text style={styles.warningText}>信息不完整，可以在下方补全后再导入。</Text> : null}
                 {item.duplicateReason ? <Text style={styles.duplicateText}>疑似重复：{item.duplicateReason}</Text> : null}
+                <View style={styles.receiptCandidateEditor} onStartShouldSetResponder={() => true}>
+                  <View style={styles.wrapRow}>
+                    <TextInput
+                      value={item.amount ? String(item.amount) : ""}
+                      onChangeText={(value) => {
+                        const amount = parseAmount(value);
+                        onUpdateCandidate(item.id, { amount: amount > 0 ? amount : null });
+                      }}
+                      keyboardType="decimal-pad"
+                      placeholder="金额"
+                      style={[styles.input, styles.receiptCandidateInput]}
+                    />
+                    <TextInput
+                      value={item.date ?? ""}
+                      onChangeText={(date) => onUpdateCandidate(item.id, { date: date.trim() || null })}
+                      placeholder="日期 2026-05-31"
+                      style={[styles.input, styles.receiptCandidateInput]}
+                    />
+                  </View>
+                  <TextInput
+                    value={item.merchant ?? ""}
+                    onChangeText={(merchant) => onUpdateCandidate(item.id, { merchant: merchant.trim() || null })}
+                    placeholder="商户/对象"
+                    style={styles.input}
+                  />
+                  <ChoiceWrap
+                    title="分类"
+                    items={categories.filter((category) => category.type === item.type).map((category) => ({ id: category.id, label: category.name, icon: category.icon }))}
+                    value={item.categoryId ?? ""}
+                    onChange={(categoryId) => onUpdateCandidate(item.id, { categoryId })}
+                  />
+                </View>
               </View>
               <Text style={[styles.transactionAmount, item.type === "income" && styles.income]}>
                 {item.amount ? `${item.type === "income" ? "+" : "-"}${formatMoney(item.amount)}` : "缺金额"}

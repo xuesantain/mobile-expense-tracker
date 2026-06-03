@@ -52,7 +52,7 @@ import {
 import { currentMonth, formatMonthLabel, monthRange, shiftMonth, todayIso } from "./src/utils/date";
 import { formatMoney, parseAmount } from "./src/utils/money";
 import { parseReceiptText } from "./src/utils/ocr";
-import { candidatesFromReceiptText, StructuredReceiptItem } from "./src/utils/receiptImport";
+import { candidatesFromReceiptText, findDuplicateTransaction, StructuredReceiptItem } from "./src/utils/receiptImport";
 import { categorySpend } from "./src/utils/stats";
 
 type TabKey = "records" | "stats" | "entry" | "discover" | "profile";
@@ -476,6 +476,24 @@ export default function App() {
     setReceiptCandidates((current) => current.map((item) => (item.id === id ? { ...item, selected: !item.selected } : item)));
   }
 
+  function updateReceiptCandidate(id: string, patch: Partial<ReceiptImportCandidate>) {
+    setReceiptCandidates((current) =>
+      current.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+        const next = { ...item, ...patch };
+        const duplicate = findDuplicateTransaction(next, transactions);
+        return {
+          ...next,
+          duplicateOfTransactionId: duplicate?.id ?? null,
+          duplicateReason: duplicate ? "金额、日期和商户与已有账单接近" : null,
+          selected: duplicate ? false : next.selected
+        };
+      })
+    );
+  }
+
   async function importReceiptCandidates() {
     if (!db) {
       return;
@@ -613,6 +631,7 @@ export default function App() {
               extractingText={extractingText}
               hasImageRecognitionKey={Boolean(qwenApiKey.trim())}
               candidates={receiptCandidates}
+              categories={categories}
               onBudgetAmountChange={setBudgetAmount}
               onSaveBudget={saveBudget}
               onOcrTextChange={setOcrText}
@@ -620,6 +639,7 @@ export default function App() {
               onExtractText={extractTextFromImage}
               onParseOcr={parseOcrCandidate}
               onToggleCandidate={toggleReceiptCandidate}
+              onUpdateCandidate={updateReceiptCandidate}
               onImportCandidates={importReceiptCandidates}
               onOpenSettings={() => setActiveTab("profile")}
             />
