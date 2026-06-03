@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { View } from "react-native";
 import { BudgetScreen } from "./BudgetScreen";
 import { OcrScreen } from "./OcrScreen";
+import { Segment } from "../components/ui";
 import { styles } from "../styles";
 import { Budget, Category, DashboardSummary, ReceiptImportCandidate } from "../types";
 
@@ -47,25 +49,47 @@ export function DiscoverScreen({
   onImportCandidates: () => void;
   onOpenSettings: () => void;
 }) {
+  const [mode, setMode] = useState<"ocr" | "budget">("ocr");
+
   return (
     <View>
-      <BudgetScreen month={month} budgetAmount={budgetAmount} budgets={budgets} summary={summary} onBudgetAmountChange={onBudgetAmountChange} onSave={onSaveBudget} />
-      <OcrScreen
-        text={ocrText}
-        imageUri={ocrImageUri}
-        extracting={extractingText}
-        hasImageRecognitionKey={hasImageRecognitionKey}
-        candidates={candidates}
-        categories={categories}
-        onTextChange={onOcrTextChange}
-        onPickImage={onPickImage}
-        onExtractText={onExtractText}
-        onParse={onParseOcr}
-        onToggleCandidate={onToggleCandidate}
-        onUpdateCandidate={onUpdateCandidate}
-        onImportCandidates={onImportCandidates}
-        onOpenSettings={onOpenSettings}
-      />
+      <View style={styles.discoverModeBar}>
+        <Segment
+          options={[
+            { label: "票据识别", value: "ocr" },
+            { label: "预算", value: "budget" }
+          ]}
+          value={mode}
+          onChange={(value) => setMode(value as "ocr" | "budget")}
+        />
+      </View>
+      {mode === "ocr" ? (
+        <OcrScreen
+          text={ocrText}
+          imageUri={ocrImageUri}
+          extracting={extractingText}
+          hasImageRecognitionKey={hasImageRecognitionKey}
+          candidates={candidates}
+          categories={categories}
+          onTextChange={onOcrTextChange}
+          onPickImage={onPickImage}
+          onExtractText={onExtractText}
+          onParse={onParseOcr}
+          onToggleCandidate={onToggleCandidate}
+          onUpdateCandidate={onUpdateCandidate}
+          onImportCandidates={onImportCandidates}
+          onOpenSettings={onOpenSettings}
+        />
+      ) : (
+        <BudgetScreen
+          month={month}
+          budgetAmount={budgetAmount}
+          budgets={budgets}
+          summary={summary}
+          onBudgetAmountChange={onBudgetAmountChange}
+          onSave={onSaveBudget}
+        />
+      )}
     </View>
   );
 }

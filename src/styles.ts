@@ -239,6 +239,7 @@ export const styles = StyleSheet.create({
   tabText: { color: colors.muted, fontSize: 11, fontWeight: "700" },
   tabTextActive: { color: colors.text },
   chartCard: { backgroundColor: colors.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.softBorder, marginBottom: 12 },
+  discoverModeBar: { marginBottom: 12 },
   statsPage: { marginHorizontal: -16, marginTop: -16, paddingBottom: 18 },
   statsHero: { backgroundColor: colors.primary, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },
   statsHeroToggle: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18 },
