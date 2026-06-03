@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ChoiceWrap, PrimaryButton } from "../components/ui";
 import { styles } from "../styles";
@@ -36,6 +37,7 @@ export function OcrScreen({
   onImportCandidates: () => void;
   onOpenSettings: () => void;
 }) {
+  const [editingCandidateId, setEditingCandidateId] = useState<string | null>(null);
   const selectedCount = candidates.filter((item) => item.selected && item.amount && item.date && !item.duplicateOfTransactionId).length;
   const duplicateCount = candidates.filter((item) => item.duplicateOfTransactionId).length;
   const incompleteCount = candidates.filter((item) => !item.amount || !item.date).length;
@@ -85,60 +87,74 @@ export function OcrScreen({
             {duplicateCount ? <Text style={styles.duplicateText}>疑似重复 {duplicateCount} 条</Text> : null}
             {incompleteCount ? <Text style={styles.warningText}>待补全 {incompleteCount} 条</Text> : null}
           </View>
-          {candidates.map((item) => (
-            <Pressable key={item.id} style={styles.receiptCandidateRow} onPress={() => onToggleCandidate(item.id)}>
-              <View style={styles.receiptCandidateCheck}>
-                <Ionicons
-                  name={item.selected ? "checkmark-circle" : "ellipse-outline"}
-                  size={22}
-                  color={item.duplicateOfTransactionId || !item.amount || !item.date ? "#e45656" : item.selected ? "#2f2f33" : "#9ca3af"}
-                />
-              </View>
-              <View style={styles.flex}>
-                <Text style={styles.transactionTitle}>{item.merchant || "未识别商户"}</Text>
-                <Text style={styles.transactionMeta}>
-                  {item.date ?? "缺少日期"} {item.time ?? ""} · {item.note}
-                </Text>
-                {!item.amount || !item.date ? <Text style={styles.warningText}>信息不完整，可以在下方补全后再导入。</Text> : null}
-                {item.duplicateReason ? <Text style={styles.duplicateText}>疑似重复：{item.duplicateReason}</Text> : null}
-                <View style={styles.receiptCandidateEditor} onStartShouldSetResponder={() => true}>
-                  <View style={styles.wrapRow}>
-                    <TextInput
-                      value={item.amount ? String(item.amount) : ""}
-                      onChangeText={(value) => {
-                        const amount = parseAmount(value);
-                        onUpdateCandidate(item.id, { amount: amount > 0 ? amount : null });
-                      }}
-                      keyboardType="decimal-pad"
-                      placeholder="金额"
-                      style={[styles.input, styles.receiptCandidateInput]}
-                    />
-                    <TextInput
-                      value={item.date ?? ""}
-                      onChangeText={(date) => onUpdateCandidate(item.id, { date: date.trim() || null })}
-                      placeholder="日期 2026-05-31"
-                      style={[styles.input, styles.receiptCandidateInput]}
-                    />
-                  </View>
-                  <TextInput
-                    value={item.merchant ?? ""}
-                    onChangeText={(merchant) => onUpdateCandidate(item.id, { merchant: merchant.trim() || null })}
-                    placeholder="商户/对象"
-                    style={styles.input}
+          {candidates.map((item) => {
+            const isEditing = editingCandidateId === item.id;
+            const needsCompletion = !item.amount || !item.date;
+            return (
+              <View key={item.id} style={styles.receiptCandidateRow}>
+                <Pressable style={styles.receiptCandidateCheck} onPress={() => onToggleCandidate(item.id)}>
+                  <Ionicons
+                    name={item.selected ? "checkmark-circle" : "ellipse-outline"}
+                    size={22}
+                    color={item.duplicateOfTransactionId || needsCompletion ? "#e45656" : item.selected ? "#2f2f33" : "#9ca3af"}
                   />
-                  <ChoiceWrap
-                    title="分类"
-                    items={categories.filter((category) => category.type === item.type).map((category) => ({ id: category.id, label: category.name, icon: category.icon }))}
-                    value={item.categoryId ?? ""}
-                    onChange={(categoryId) => onUpdateCandidate(item.id, { categoryId })}
-                  />
+                </Pressable>
+                <View style={styles.flex}>
+                  <Text style={styles.transactionTitle}>{item.merchant || "未识别商户"}</Text>
+                  <Text style={styles.transactionMeta}>
+                    {item.date ?? "缺少日期"} {item.time ?? ""} · {item.note}
+                  </Text>
+                  {needsCompletion ? <Text style={styles.warningText}>信息不完整，点“编辑”补全后再导入。</Text> : null}
+                  {item.duplicateReason ? <Text style={styles.duplicateText}>疑似重复：{item.duplicateReason}</Text> : null}
+                  {isEditing ? (
+                    <View style={styles.receiptCandidateEditor}>
+                      <View style={styles.wrapRow}>
+                        <TextInput
+                          value={item.amount ? String(item.amount) : ""}
+                          onChangeText={(value) => {
+                            const amount = parseAmount(value);
+                            onUpdateCandidate(item.id, { amount: amount > 0 ? amount : null });
+                          }}
+                          keyboardType="decimal-pad"
+                          placeholder="金额"
+                          style={[styles.input, styles.receiptCandidateInput]}
+                        />
+                        <TextInput
+                          value={item.date ?? ""}
+                          onChangeText={(date) => onUpdateCandidate(item.id, { date: date.trim() || null })}
+                          placeholder="日期 2026-05-31"
+                          style={[styles.input, styles.receiptCandidateInput]}
+                        />
+                      </View>
+                      <TextInput
+                        value={item.merchant ?? ""}
+                        onChangeText={(merchant) => onUpdateCandidate(item.id, { merchant: merchant.trim() || null })}
+                        placeholder="商户/对象"
+                        style={styles.input}
+                      />
+                      <ChoiceWrap
+                        title="分类"
+                        items={categories.filter((category) => category.type === item.type).map((category) => ({ id: category.id, label: category.name, icon: category.icon }))}
+                        value={item.categoryId ?? ""}
+                        onChange={(categoryId) => onUpdateCandidate(item.id, { categoryId })}
+                      />
+                      <Text style={styles.linkText} onPress={() => setEditingCandidateId(null)}>
+                        收起编辑
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+                <View style={styles.transactionRight}>
+                  <Text style={[styles.transactionAmount, item.type === "income" && styles.income]}>
+                    {item.amount ? `${item.type === "income" ? "+" : "-"}${formatMoney(item.amount)}` : "缺金额"}
+                  </Text>
+                  <Pressable style={styles.iconAction} onPress={() => setEditingCandidateId(isEditing ? null : item.id)}>
+                    <Ionicons name="create-outline" size={17} color={needsCompletion ? "#e45656" : "#9ca3af"} />
+                  </Pressable>
                 </View>
               </View>
-              <Text style={[styles.transactionAmount, item.type === "income" && styles.income]}>
-                {item.amount ? `${item.type === "income" ? "+" : "-"}${formatMoney(item.amount)}` : "缺金额"}
-              </Text>
-            </Pressable>
-          ))}
+            );
+          })}
           <PrimaryButton label={`导入选中账单（${selectedCount}）`} onPress={onImportCandidates} disabled={selectedCount === 0} />
         </View>
       ) : null}
