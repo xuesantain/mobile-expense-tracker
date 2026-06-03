@@ -135,7 +135,7 @@ export function ProfileScreen({
             </View>
             <View style={styles.flex}>
               <Text style={styles.settingTitle}>导出账单 CSV</Text>
-              <Text style={styles.mutedText}>备份、迁移或用表格软件继续分析。</Text>
+              <Text style={styles.mutedText}>用于备份、迁移，或用表格软件继续分析。</Text>
             </View>
           </View>
           <Text style={styles.settingBadge}>导出</Text>
@@ -151,7 +151,7 @@ export function ProfileScreen({
             </View>
             <View style={styles.flex}>
               <Text style={styles.settingTitle}>分类和账户</Text>
-              <Text style={styles.mutedText}>已放到“记账”页，可在录入时快速新增。</Text>
+              <Text style={styles.mutedText}>已放到“记账”页，可以在录入时快速新增。</Text>
             </View>
           </View>
           <Text style={styles.settingBadge}>记账页</Text>

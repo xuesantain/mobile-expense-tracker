@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
-import { EmptyState, Field, PrimaryButton, SectionTitle } from "../components/ui";
 import { ProgressRow } from "../components/ProgressRow";
+import { EmptyState, Field, PrimaryButton, SectionTitle } from "../components/ui";
 import { styles } from "../styles";
 import { Budget, DashboardSummary } from "../types";
 import { formatMonthLabel } from "../utils/date";

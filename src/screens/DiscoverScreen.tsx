@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { BudgetScreen } from "./BudgetScreen";
-import { OcrScreen } from "./OcrScreen";
 import { Segment } from "../components/ui";
 import { styles } from "../styles";
 import { Budget, Category, DashboardSummary, ReceiptImportCandidate } from "../types";
+import { BudgetScreen } from "./BudgetScreen";
+import { OcrScreen } from "./OcrScreen";
 
 export function DiscoverScreen({
   month,

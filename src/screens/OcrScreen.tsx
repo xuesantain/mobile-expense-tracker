@@ -45,7 +45,7 @@ export function OcrScreen({
   return (
     <View>
       <Text style={styles.panelTitle}>票据识别</Text>
-      <Text style={styles.mutedText}>先选择票据图片并提取文字，或直接粘贴 OCR 文本。解析出的金额、日期、商户和分类仍需确认后才会入账。</Text>
+      <Text style={styles.mutedText}>先选择票据或账单截图，系统会提取候选账单。金额、日期、商户和分类仍需要你确认后才会入账。</Text>
       {!hasImageRecognitionKey ? (
         <View style={styles.noticeBox}>
           <Text style={styles.noticeTitle}>需要先配置 Qwen API Key</Text>
@@ -70,7 +70,7 @@ export function OcrScreen({
           </Pressable>
         </>
       ) : null}
-      <Text style={styles.mutedText}>图片识别会优先使用已配置的 Qwen3-VL-Flash。识别失败时不会自动入账，可改用粘贴文本后本地解析。</Text>
+      <Text style={styles.mutedText}>图片识别优先使用已配置的 Qwen3-VL-Flash。识别失败时不会自动入账，可以粘贴文本后重新解析。</Text>
       <TextInput
         value={text}
         onChangeText={onTextChange}
@@ -104,7 +104,7 @@ export function OcrScreen({
                   <Text style={styles.transactionMeta}>
                     {item.date ?? "缺少日期"} {item.time ?? ""} · {item.note}
                   </Text>
-                  {needsCompletion ? <Text style={styles.warningText}>信息不完整，点“编辑”补全后再导入。</Text> : null}
+                  {needsCompletion ? <Text style={styles.warningText}>信息不完整，点击编辑补全后再导入。</Text> : null}
                   {item.duplicateReason ? <Text style={styles.duplicateText}>疑似重复：{item.duplicateReason}</Text> : null}
                   {isEditing ? (
                     <View style={styles.receiptCandidateEditor}>
