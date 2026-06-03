@@ -424,30 +424,11 @@ async function nextSortOrder(db: ExpenseDatabase, table: "categories" | "account
 }
 
 async function localizeDefaultNames(db: ExpenseDatabase): Promise<void> {
-  const oldCategoryNames: Record<string, string> = {
-    "cat-food": "Food",
-    "cat-transport": "Transport",
-    "cat-shopping": "Shopping",
-    "cat-home": "Home",
-    "cat-health": "Health",
-    "cat-fun": "Fun",
-    "cat-other-expense": "Other expense",
-    "cat-salary": "Salary",
-    "cat-refund": "Refund",
-    "cat-other-income": "Other income"
-  };
-  const oldAccountNames: Record<string, string> = {
-    "acc-cash": "Cash",
-    "acc-wechat": "WeChat Pay",
-    "acc-alipay": "Alipay",
-    "acc-card": "Bank card"
-  };
-
   for (const category of defaultCategories) {
-    await db.runAsync("UPDATE categories SET name = ? WHERE id = ? AND name = ?", category.name, category.id, oldCategoryNames[category.id] ?? "");
+    await db.runAsync("UPDATE categories SET name = ?, icon = ?, sort_order = ? WHERE id = ?", category.name, category.icon, category.sortOrder, category.id);
   }
   for (const account of defaultAccounts) {
-    await db.runAsync("UPDATE accounts SET name = ? WHERE id = ? AND name = ?", account.name, account.id, oldAccountNames[account.id] ?? "");
+    await db.runAsync("UPDATE accounts SET name = ?, icon = ?, sort_order = ? WHERE id = ?", account.name, account.icon, account.sortOrder, account.id);
   }
 }
 

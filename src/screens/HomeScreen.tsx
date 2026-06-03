@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { EmptyState, PrimaryButton } from "../components/ui";
 import { TransactionRow } from "../components/TransactionRow";
+import { EmptyState, PrimaryButton } from "../components/ui";
 import { styles } from "../styles";
 import { Account, Category, DashboardSummary, Transaction } from "../types";
-import { formatMoney } from "../utils/money";
 import { formatMonthLabel } from "../utils/date";
+import { formatMoney } from "../utils/money";
 
 export function HomeScreen({
   summary,
@@ -48,7 +48,9 @@ export function HomeScreen({
       <View style={styles.hero}>
         <View style={styles.monthSummaryRow}>
           <View style={styles.monthBlock}>
-            <Text style={styles.monthYear} onPress={() => setShowMonthPicker((current) => !current)}>{monthLabel.slice(0, 4)}年</Text>
+            <Text style={styles.monthYear} onPress={() => setShowMonthPicker((current) => !current)}>
+              {monthLabel.slice(0, 4)}年
+            </Text>
             <Text style={styles.monthText} onPress={() => setShowMonthPicker((current) => !current)}>
               {monthLabel.slice(5, 7)}
               <Text style={styles.monthUnit}>月</Text>
@@ -66,7 +68,9 @@ export function HomeScreen({
         {showMonthPicker ? (
           <View style={styles.monthPicker}>
             <View style={styles.monthPickerHeader}>
-              <Text style={styles.monthSwitchText} onPress={() => setPickerYear((year) => year - 1)}>上一年</Text>
+              <Text style={styles.monthSwitchText} onPress={() => setPickerYear((year) => year - 1)}>
+                上一年
+              </Text>
               <Text style={styles.monthPickerYear}>{pickerYear}年</Text>
               <Text
                 style={[styles.monthSwitchText, pickerYear >= currentYear && styles.monthSwitchTextDisabled]}

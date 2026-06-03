@@ -38,7 +38,6 @@ export function EntryScreen({
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const visibleCategories = categories.filter((item) => item.type === draft.type);
   const baseCategories = visibleCategories.filter((item) => !(draft.type === "expense" && item.id === "cat-other-expense"));
   const compactCategories = showAllCategories ? baseCategories : baseCategories.slice(0, 8);
@@ -53,14 +52,13 @@ export function EntryScreen({
   const amountValue = parseAmount(draft.amount);
   const canSubmit = amountValue > 0 && Boolean(draft.categoryId);
   const modeNotice = getModeNotice(entryMode, draft.source);
-  const hasOptionalDetails = Boolean(draft.note.trim() || draft.merchant.trim());
   const canStayAfterSave = !editing && draft.source === "manual";
 
   useEffect(() => {
-    if (editing || entryMode === "copy" || entryMode === "ocr" || hasOptionalDetails) {
-      setShowOptionalDetails(true);
-    }
-  }, [editing, entryMode, hasOptionalDetails]);
+    onCategoryDraftChange({ ...categoryDraft, type: draft.type });
+    // The draft type is the only thing that should sync automatically here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.type]);
 
   return (
     <View>
@@ -91,7 +89,7 @@ export function EntryScreen({
         placeholder="金额，例如 28.50"
         style={styles.amountInput}
       />
-      {!canSubmit ? <Text style={styles.formHint}>输入大于 0 的金额后即可保存。</Text> : null}
+      {!canSubmit ? <Text style={styles.formHint}>输入大于 0 的金额并选择分类后即可保存。</Text> : null}
 
       <ChoiceWrap
         title="分类"
@@ -116,7 +114,6 @@ export function EntryScreen({
           <Text style={styles.statLabel}>新增分类</Text>
           <View style={styles.wrapRow}>
             <TextInput value={categoryDraft.name} onChangeText={(name) => onCategoryDraftChange({ ...categoryDraft, name, type: draft.type })} placeholder="新分类名" style={[styles.input, styles.smallInput]} />
-            <TextInput value={categoryDraft.icon} onChangeText={(icon) => onCategoryDraftChange({ ...categoryDraft, icon, type: draft.type })} placeholder="图标名" style={[styles.input, styles.smallInput]} />
           </View>
           <ChoiceWrap
             title="选择图标"
@@ -186,16 +183,8 @@ export function EntryScreen({
         ) : null}
       </View>
 
-      <Pressable style={styles.optionalDetailsToggle} onPress={() => setShowOptionalDetails((current) => !current)}>
-        <Text style={styles.optionalDetailsTitle}>备注和商户</Text>
-        <Text style={styles.optionalDetailsHint}>{showOptionalDetails ? "收起" : hasOptionalDetails ? "已填写" : "可选"}</Text>
-      </Pressable>
-      {showOptionalDetails ? (
-        <>
-          <Field label="备注" value={draft.note} placeholder="可选" onChangeText={(note) => onDraftChange({ ...draft, note })} />
-          <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
-        </>
-      ) : null}
+      <Field label="备注" value={draft.note} placeholder="可选" onChangeText={(note) => onDraftChange({ ...draft, note })} />
+      <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
       <PrimaryButton
         label={editing ? "保存修改" : draft.source === "ocr" ? "确认票据入账" : "保存并继续"}
         onPress={() => onSubmit({ stayOnEntry: canStayAfterSave })}

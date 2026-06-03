@@ -30,7 +30,7 @@ export function StatsScreen({
   const activePeriodIndex = selectedPeriodIndex >= 0 && selectedPeriodIndex < periodOptions.length ? selectedPeriodIndex : periodOptions.length - 1;
   const activePeriod = periodOptions[activePeriodIndex];
   const filteredTransactions = useMemo(() => filterTransactionsByPeriod(transactions, activePeriod), [transactions, activePeriod]);
-  const trendPoints = useMemo(() => buildTrendPoints(filteredTransactions, range, activePeriod), [activePeriod, filteredTransactions, range]);
+  const trendPoints = useMemo(() => buildTrendPoints(transactions, filteredTransactions, range, activePeriod), [activePeriod, filteredTransactions, range, transactions]);
   const categoryIcons = useMemo(() => new Map(categories.map((category) => [category.id, category.icon])), [categories]);
   const expenseByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "expense"), [filteredTransactions, categories]);
   const incomeByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "income"), [filteredTransactions, categories]);
@@ -80,7 +80,7 @@ export function StatsScreen({
 
       <Text style={styles.statsRankingTitle}>{metric === "expense" ? "支出排行榜" : "收入排行榜"}</Text>
       {rankingItems.length === 0 ? (
-        <EmptyState title="暂无排行" body={`${activePeriod?.label ?? "当前区间"}有${metric === "expense" ? "支出" : "收入"}后会展示分类排行。`} />
+        <EmptyState title="暂无排行" body={`${activePeriod?.label ?? "当前区间"}没有${metric === "expense" ? "支出" : "收入"}记录。`} />
       ) : (
         <View style={styles.statsRankingList}>
           {rankingItems.map((item, index) => {
@@ -128,7 +128,7 @@ function categoryTotals(transactions: Transaction[], categories: Category[], typ
     .sort((left, right) => right.amount - left.amount);
 }
 
-function buildTrendPoints(transactions: Transaction[], range: TrendRange, period: PeriodOption | undefined): TrendPoint[] {
+function buildTrendPoints(allTransactions: Transaction[], periodTransactions: Transaction[], range: TrendRange, period: PeriodOption | undefined): TrendPoint[] {
   if (!period) {
     return [];
   }
@@ -139,7 +139,7 @@ function buildTrendPoints(transactions: Transaction[], range: TrendRange, period
       const month = String(index + 1).padStart(2, "0");
       return {
         label: `${index + 1}月`,
-        ...sumForPrefix(transactions, `${year}-${month}`)
+        ...sumForPrefix(allTransactions, `${year}-${month}`)
       };
     });
   }
@@ -152,7 +152,7 @@ function buildTrendPoints(transactions: Transaction[], range: TrendRange, period
       const date = `${period.start.slice(0, 8)}${day}`;
       return {
         label: date.slice(5),
-        ...sumForPrefix(transactions, date)
+        ...sumForPrefix(periodTransactions, date)
       };
     });
   }
@@ -163,7 +163,7 @@ function buildTrendPoints(transactions: Transaction[], range: TrendRange, period
     const iso = toIsoDate(date);
     return {
       label: iso.slice(5),
-      ...sumForPrefix(transactions, iso)
+      ...sumForPrefix(periodTransactions, iso)
     };
   });
 }
