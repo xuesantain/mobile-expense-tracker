@@ -40,6 +40,7 @@ import {
   Category,
   DashboardSummary,
   DraftTransaction,
+  EntryMode,
   ManageableAccount,
   ManageableCategory,
   ReceiptImportCandidate,
@@ -113,6 +114,7 @@ export default function App() {
   const [pendingScanId, setPendingScanId] = useState<string | null>(null);
   const [budgetAmount, setBudgetAmount] = useState("");
   const [draft, setDraft] = useState<DraftTransaction>(initialDraft);
+  const [entryMode, setEntryMode] = useState<EntryMode>("new");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categoryDraft, setCategoryDraft] = useState<ManageableCategory>({ name: "", type: "expense", icon: "pricetag" });
   const [accountDraft, setAccountDraft] = useState<ManageableAccount>({ name: "", icon: "wallet" });
@@ -235,10 +237,12 @@ export default function App() {
 
   function resetDraft(accountId = draft.accountId) {
     setDraft({ ...initialDraft, accountId, date: todayIso() });
+    setEntryMode("new");
   }
 
   function editTransaction(transaction: Transaction) {
     setEditingId(transaction.id);
+    setEntryMode("edit");
     setDraft({
       amount: String(transaction.amount),
       type: transaction.type,
@@ -254,6 +258,7 @@ export default function App() {
 
   function copyTransaction(transaction: Transaction) {
     setEditingId(null);
+    setEntryMode("copy");
     setDraft({
       amount: String(transaction.amount),
       type: transaction.type,
@@ -580,6 +585,7 @@ export default function App() {
           {activeTab === "entry" ? (
             <EntryScreen
               draft={draft}
+              entryMode={entryMode}
               editing={Boolean(editingId)}
               categories={categories}
               onDraftChange={setDraft}

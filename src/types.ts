@@ -2,6 +2,8 @@ export type TransactionType = "expense" | "income";
 
 export type TransactionSource = "manual" | "ocr";
 
+export type EntryMode = "new" | "edit" | "copy" | "ocr";
+
 export type Category = {
   id: string;
   name: string;

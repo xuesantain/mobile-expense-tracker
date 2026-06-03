@@ -22,9 +22,10 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
   const total = Math.round(values.reduce((sum, value) => sum + value, 0) * 100) / 100;
   const average = points.length ? Math.round((total / points.length) * 100) / 100 : 0;
   const actualMaxValue = Math.max(...values, 0);
-  const maxValue = Math.max(actualMaxValue, 1);
+  const maxValue = actualMaxValue > 0 ? actualMaxValue : 1;
   const selected = selectedIndex === null ? null : points[selectedIndex] ?? null;
   const nodes = useMemo(() => layoutNodes(points, metric, maxValue, plotWidth), [points, metric, maxValue, plotWidth]);
+  const metricLabel = metric === "expense" ? "支出" : "收入";
 
   function handlePlotLayout(event: LayoutChangeEvent) {
     setPlotWidth(event.nativeEvent.layout.width);
@@ -34,42 +35,51 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
     <View style={styles.flatTrendCard}>
       <View style={styles.trendMetaRow}>
         <View>
-          <Text style={styles.trendMetaText}>总{metric === "expense" ? "支出" : "收入"}：{formatMoney(total)}</Text>
+          <Text style={styles.trendMetaText}>
+            总{metricLabel}：{formatMoney(total)}
+          </Text>
           <Text style={styles.trendMetaText}>平均值：{formatMoney(average)}</Text>
         </View>
         <Text style={styles.trendMaxText}>{formatMoney(actualMaxValue)}</Text>
       </View>
       {selected ? (
         <Text style={styles.trendSelectedText}>
-          {selected.label} {metric === "expense" ? "支出" : "收入"} {formatMoney(selected[metric])}
+          {selected.label} {metricLabel} {formatMoney(selected[metric])}
         </Text>
       ) : null}
-      <View style={styles.simpleLinePlot} onLayout={handlePlotLayout}>
-        <View style={styles.gridLineTop} />
-        <View style={styles.gridLineMiddle} />
-        <View style={styles.gridLineBottom} />
-        {plotWidth > 0 ? (
-          <View style={styles.lineSeries}>
-            {nodes.slice(0, -1).map((node, index) => renderSegment(node, nodes[index + 1], `${metric}-${node.label}-${index}`))}
+      <View style={styles.lineChartWrap}>
+        <View style={styles.yAxis}>
+          <Text style={styles.axisLabel}>{formatCompactMoney(actualMaxValue)}</Text>
+          <Text style={styles.axisLabel}>{formatCompactMoney(actualMaxValue / 2)}</Text>
+          <Text style={styles.axisLabel}>0</Text>
+        </View>
+        <View style={[styles.simpleLinePlot, styles.flex]} onLayout={handlePlotLayout}>
+          <View style={styles.gridLineTop} />
+          <View style={styles.gridLineMiddle} />
+          <View style={styles.gridLineBottom} />
+          {plotWidth > 0 ? (
+            <View style={styles.lineSeries}>
+              {nodes.slice(0, -1).map((node, index) => renderSegment(node, nodes[index + 1], `${metric}-${node.label}-${index}`))}
+            </View>
+          ) : null}
+          <View style={styles.lineTapLayer}>
+            {nodes.map((node, index) => (
+              <Pressable key={`${node.label}-${index}`} style={[styles.lineTapColumn, { left: node.columnLeft, width: node.columnWidth }]} onPress={() => setSelectedIndex(index)}>
+                <View
+                  style={[
+                    styles.singleLineNode,
+                    index === selectedIndex && styles.singleLineNodeActive,
+                    {
+                      left: node.x - node.columnLeft - nodeSize / 2,
+                      bottom: node.bottom - nodeSize / 2,
+                      backgroundColor: node.value > 0 ? "#ffd83d" : "#fff"
+                    }
+                  ]}
+                />
+                <Text style={styles.trendLabel}>{node.label}</Text>
+              </Pressable>
+            ))}
           </View>
-        ) : null}
-        <View style={styles.lineTapLayer}>
-          {nodes.map((node, index) => (
-            <Pressable key={`${node.label}-${index}`} style={[styles.lineTapColumn, { left: node.columnLeft, width: node.columnWidth }]} onPress={() => setSelectedIndex(index)}>
-              <View
-                style={[
-                  styles.singleLineNode,
-                  index === selectedIndex && styles.singleLineNodeActive,
-                  {
-                    left: node.x - node.columnLeft - nodeSize / 2,
-                    bottom: node.bottom - nodeSize / 2,
-                    backgroundColor: node.value > 0 ? "#ffd83d" : "#fff"
-                  }
-                ]}
-              />
-              <Text style={styles.trendLabel}>{node.label}</Text>
-            </Pressable>
-          ))}
         </View>
       </View>
     </View>
@@ -126,4 +136,14 @@ function renderSegment(start: NodeLayout, end: NodeLayout, key: string) {
 
 function pointBottom(value: number, maxValue: number): number {
   return Math.max((value / maxValue) * chartHeight, value ? 6 : 0);
+}
+
+function formatCompactMoney(value: number): string {
+  if (value >= 10000) {
+    return `${Math.round(value / 100) / 100}万`;
+  }
+  if (value >= 1000) {
+    return `${Math.round(value / 1000)}k`;
+  }
+  return `${Math.round(value * 100) / 100}`;
 }

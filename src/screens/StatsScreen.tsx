@@ -30,15 +30,7 @@ export function StatsScreen({
   const activePeriodIndex = selectedPeriodIndex >= 0 && selectedPeriodIndex < periodOptions.length ? selectedPeriodIndex : periodOptions.length - 1;
   const activePeriod = periodOptions[activePeriodIndex];
   const filteredTransactions = useMemo(() => filterTransactionsByPeriod(transactions, activePeriod), [transactions, activePeriod]);
-  const trendPoints = useMemo(() => {
-    if (range === "year") {
-      return periodOptions.map((period) => ({
-        label: period.label,
-        ...sumForPeriod(transactions, period)
-      }));
-    }
-    return buildTrendPoints(filteredTransactions, range, activePeriod);
-  }, [activePeriod, filteredTransactions, periodOptions, range, transactions]);
+  const trendPoints = useMemo(() => buildTrendPoints(filteredTransactions, range, activePeriod), [activePeriod, filteredTransactions, range]);
   const categoryIcons = useMemo(() => new Map(categories.map((category) => [category.id, category.icon])), [categories]);
   const expenseByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "expense"), [filteredTransactions, categories]);
   const incomeByCategory = useMemo(() => categoryTotals(filteredTransactions, categories, "income"), [filteredTransactions, categories]);
@@ -54,7 +46,7 @@ export function StatsScreen({
       <View style={styles.statsHero}>
         <Pressable style={styles.statsHeroToggle} onPress={() => setMetric(metric === "expense" ? "income" : "expense")}>
           <Text style={styles.statsHeroTitle}>{metric === "expense" ? "支出" : "收入"}</Text>
-          <Ionicons name="swap-vertical" size={28} color={colors.text} />
+          <Ionicons name="swap-horizontal" size={28} color={colors.text} />
         </Pressable>
         <View style={styles.statsRangeSegment}>
           {[
@@ -141,6 +133,17 @@ function buildTrendPoints(transactions: Transaction[], range: TrendRange, period
     return [];
   }
 
+  if (range === "year") {
+    const year = Number(period.start.slice(0, 4));
+    return Array.from({ length: 12 }, (_, index) => {
+      const month = String(index + 1).padStart(2, "0");
+      return {
+        label: `${index + 1}月`,
+        ...sumForPrefix(transactions, `${year}-${month}`)
+      };
+    });
+  }
+
   if (range === "month") {
     const firstDay = Number(period.start.slice(8, 10));
     const lastDay = Number(period.end.slice(8, 10));
@@ -169,19 +172,6 @@ function sumForPrefix(transactions: Transaction[], prefix: string): Pick<TrendPo
   const totals = { expense: 0, income: 0 };
   for (const transaction of transactions) {
     if (transaction.date.startsWith(prefix)) {
-      totals[transaction.type] += transaction.amount;
-    }
-  }
-  return {
-    expense: Math.round(totals.expense * 100) / 100,
-    income: Math.round(totals.income * 100) / 100
-  };
-}
-
-function sumForPeriod(transactions: Transaction[], period: PeriodOption): Pick<TrendPoint, "expense" | "income"> {
-  const totals = { expense: 0, income: 0 };
-  for (const transaction of transactions) {
-    if (transaction.date >= period.start && transaction.date <= period.end) {
       totals[transaction.type] += transaction.amount;
     }
   }
@@ -230,8 +220,8 @@ function buildPeriodOptions(range: TrendRange, month: string): PeriodOption[] {
   }
 
   const currentYear = Number(month.slice(0, 4));
-  return [currentYear - 2, currentYear - 1, currentYear].map((year) => ({
-    label: year === currentYear ? "今年" : `${year}年`,
+  return [currentYear - 1, currentYear].map((year) => ({
+    label: year === currentYear ? "今年" : "去年",
     start: `${year}-01-01`,
     end: `${year}-12-31`
   }));

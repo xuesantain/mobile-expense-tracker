@@ -2,12 +2,15 @@ import { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ChoiceWrap, Field, PrimaryButton, Segment } from "../components/ui";
 import { styles } from "../styles";
-import { Category, DraftTransaction, ManageableCategory, TransactionType } from "../types";
+import { Category, DraftTransaction, EntryMode, ManageableCategory, TransactionType } from "../types";
 import { todayIso } from "../utils/date";
 import { parseAmount } from "../utils/money";
 
+const iconOptions = ["restaurant", "bus", "bag", "home", "medkit", "game-controller", "cart", "cafe", "pricetag", "ellipsis-horizontal"];
+
 export function EntryScreen({
   draft,
+  entryMode,
   editing,
   categories,
   onDraftChange,
@@ -20,6 +23,7 @@ export function EntryScreen({
   onDeleteCategory
 }: {
   draft: DraftTransaction;
+  entryMode: EntryMode;
   editing: boolean;
   categories: Category[];
   onDraftChange: (draft: DraftTransaction) => void;
@@ -34,7 +38,6 @@ export function EntryScreen({
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const visibleCategories = categories.filter((item) => item.type === draft.type);
-  const iconOptions = ["restaurant", "bus", "bag", "home", "medkit", "game-controller", "cart", "cafe", "pricetag", "ellipsis-horizontal"];
   const categoryItems = [
     ...visibleCategories
       .filter((item) => !(draft.type === "expense" && item.id === "cat-other-expense"))
@@ -45,9 +48,17 @@ export function EntryScreen({
   const dateOptions = useMemo(() => buildDateOptions(draft.date), [draft.date]);
   const amountValue = parseAmount(draft.amount);
   const canSubmit = amountValue > 0 && Boolean(draft.categoryId);
+  const modeNotice = getModeNotice(entryMode, draft.source);
 
   return (
     <View>
+      {modeNotice ? (
+        <View style={styles.noticeBox}>
+          <Text style={styles.noticeTitle}>{modeNotice.title}</Text>
+          <Text style={styles.mutedText}>{modeNotice.body}</Text>
+        </View>
+      ) : null}
+
       <Segment
         options={[
           { label: "支出", value: "expense" },
@@ -56,6 +67,7 @@ export function EntryScreen({
         value={draft.type}
         onChange={(value) => onTypeChange(value as TransactionType)}
       />
+
       <TextInput
         value={draft.amount}
         onChangeText={(amount) => onDraftChange({ ...draft, amount })}
@@ -90,7 +102,7 @@ export function EntryScreen({
             value={categoryDraft.icon}
             onChange={(icon) => onCategoryDraftChange({ ...categoryDraft, icon, type: draft.type })}
           />
-          <PrimaryButton label="添加分类" onPress={onSaveCategory} />
+          <PrimaryButton label="新增分类" onPress={onSaveCategory} />
         </View>
       ) : null}
 
@@ -210,6 +222,28 @@ function normalizeDate(year: number, month: number, day: number): string {
   const date = `${year}-${String(month).padStart(2, "0")}-${String(normalizedDay).padStart(2, "0")}`;
   const today = todayIso();
   return date > today ? today : date;
+}
+
+function getModeNotice(entryMode: EntryMode, source: DraftTransaction["source"]) {
+  if (entryMode === "edit") {
+    return {
+      title: "正在编辑账单",
+      body: "保存后会覆盖原记录，取消编辑可回到新增模式。"
+    };
+  }
+  if (entryMode === "copy") {
+    return {
+      title: "已复制为新账单",
+      body: "金额、分类、备注和商户已带入，日期默认改为今天，保存后会新增一条记录。"
+    };
+  }
+  if (entryMode === "ocr" || source === "ocr") {
+    return {
+      title: "票据候选入账",
+      body: "请确认金额、分类、日期和商户信息无误后再入账。"
+    };
+  }
+  return null;
 }
 
 function iconLabel(icon: string): string {
