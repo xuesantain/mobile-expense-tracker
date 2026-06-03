@@ -36,12 +36,15 @@ export function EntryScreen({
   onDeleteCategory: (category: Category) => void;
 }) {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const visibleCategories = categories.filter((item) => item.type === draft.type);
+  const baseCategories = visibleCategories.filter((item) => !(draft.type === "expense" && item.id === "cat-other-expense"));
+  const compactCategories = showAllCategories ? baseCategories : baseCategories.slice(0, 8);
+  const selectedCategory = baseCategories.find((item) => item.id === draft.categoryId);
+  const categoryChoices = selectedCategory && !compactCategories.some((item) => item.id === selectedCategory.id) ? [...compactCategories, selectedCategory] : compactCategories;
   const categoryItems = [
-    ...visibleCategories
-      .filter((item) => !(draft.type === "expense" && item.id === "cat-other-expense"))
-      .map((item) => ({ id: item.id, label: item.name, icon: item.icon, onLongPress: () => onDeleteCategory(item) })),
+    ...categoryChoices.map((item) => ({ id: item.id, label: item.name, icon: item.icon, onLongPress: () => onDeleteCategory(item) })),
     { id: "__add_category__", label: "添加分类", icon: "add-circle" }
   ];
   const selectedDate = parseDateParts(draft.date);
@@ -65,7 +68,11 @@ export function EntryScreen({
           { label: "收入", value: "income" }
         ]}
         value={draft.type}
-        onChange={(value) => onTypeChange(value as TransactionType)}
+        onChange={(value) => {
+          setShowAllCategories(false);
+          setShowCategoryForm(false);
+          onTypeChange(value as TransactionType);
+        }}
       />
 
       <TextInput
@@ -86,9 +93,15 @@ export function EntryScreen({
             setShowCategoryForm((current) => !current);
             return;
           }
+          setShowCategoryForm(false);
           onDraftChange({ ...draft, categoryId });
         }}
       />
+      {baseCategories.length > 8 ? (
+        <Text style={styles.entryCategoryToggle} onPress={() => setShowAllCategories((current) => !current)}>
+          {showAllCategories ? "收起分类" : `展开全部 ${baseCategories.length} 个分类`}
+        </Text>
+      ) : null}
       {showCategoryForm ? (
         <View style={styles.inlineAddPanel}>
           <Text style={styles.statLabel}>新增分类</Text>

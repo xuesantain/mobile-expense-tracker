@@ -140,6 +140,7 @@ export const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { color: "#374151", fontWeight: "700" },
   chipTextActive: { color: colors.text },
+  entryCategoryToggle: { alignSelf: "flex-start", color: colors.text, fontSize: 12, fontWeight: "900", backgroundColor: colors.primarySoft, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, marginTop: -6, marginBottom: 12 },
   primaryButton: { backgroundColor: colors.primary, borderRadius: 16, alignItems: "center", paddingVertical: 15, marginTop: 4 },
   primaryButtonDisabled: { backgroundColor: "#e5e7eb" },
   pressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
