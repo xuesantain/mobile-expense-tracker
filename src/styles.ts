@@ -59,6 +59,19 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.softBorder
   },
+  toast: {
+    position: "absolute",
+    alignSelf: "center",
+    bottom: Platform.OS === "ios" ? 122 : 110,
+    zIndex: 12,
+    overflow: "hidden",
+    color: colors.surface,
+    fontWeight: "900",
+    backgroundColor: "rgba(38,38,42,0.92)",
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 999
+  },
   monthGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 8 },
   monthGridItem: { width: "23.5%", textAlign: "center", color: colors.text, fontWeight: "900", paddingVertical: 10, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.35)" },
   monthGridItemActive: { backgroundColor: colors.text, color: colors.surface },

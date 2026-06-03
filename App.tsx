@@ -3,7 +3,7 @@ import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
 import {
   addTransaction,
@@ -118,6 +118,8 @@ export default function App() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categoryDraft, setCategoryDraft] = useState<ManageableCategory>({ name: "", type: "expense", icon: "pricetag" });
   const [accountDraft, setAccountDraft] = useState<ManageableAccount>({ name: "", icon: "wallet" });
+  const [toast, setToast] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const month = selectedMonth;
   const thisMonth = currentMonth();
@@ -136,6 +138,14 @@ export default function App() {
       })
       .catch((error) => Alert.alert("数据库初始化失败", String(error)))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) {
+        clearTimeout(toastTimer.current);
+      }
+    };
   }, []);
 
   async function refresh(database = db, nextFilters = filters, nextMonth = month) {
@@ -217,6 +227,7 @@ export default function App() {
       source: draft.source
     };
 
+    const wasEditing = Boolean(editingId);
     if (editingId) {
       await updateTransaction(db, editingId, input);
       setEditingId(null);
@@ -233,6 +244,7 @@ export default function App() {
     setOcrImageUri(null);
     await refresh(db, filters, month);
     setActiveTab("records");
+    showToast(wasEditing ? "修改已保存" : "账单已保存");
   }
 
   function resetDraft(accountId = draft.accountId) {
@@ -305,11 +317,14 @@ export default function App() {
   async function saveCategoryDraft() {
     if (!db || !categoryDraft.name.trim()) {
       Alert.alert("分类名称必填", "请输入分类名称。");
-      return;
+      return false;
     }
-    await saveCategory(db, categoryDraft);
-    setCategoryDraft({ name: "", type: categoryDraft.type, icon: "pricetag" });
+    const saved = await saveCategory(db, categoryDraft);
+    setDraft((current) => ({ ...current, type: saved.type, categoryId: saved.id }));
+    setCategoryDraft({ name: "", type: saved.type, icon: "pricetag" });
     await refresh(db, filters, month);
+    showToast(`已添加分类：${saved.name}`);
+    return true;
   }
 
   async function removeCategory(category: Category) {
@@ -569,6 +584,14 @@ export default function App() {
     }
   }
 
+  function showToast(message: string) {
+    setToast(message);
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current);
+    }
+    toastTimer.current = setTimeout(() => setToast(""), 1800);
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.loading}>
@@ -664,6 +687,7 @@ export default function App() {
             回到本月
           </Text>
         ) : null}
+        {toast ? <Text style={styles.toast}>{toast}</Text> : null}
         <View style={styles.tabBar}>
           {tabs.map((tab) => (
             <Pressable key={tab.key} style={[styles.tabItem, tab.key === "entry" && styles.centerTabItem]} onPress={() => setActiveTab(tab.key)}>

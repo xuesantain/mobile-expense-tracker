@@ -32,7 +32,7 @@ export function EntryScreen({
   onCancelEdit: () => void;
   categoryDraft: ManageableCategory;
   onCategoryDraftChange: (draft: ManageableCategory) => void;
-  onSaveCategory: () => void;
+  onSaveCategory: () => boolean | Promise<boolean>;
   onDeleteCategory: (category: Category) => void;
 }) {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -123,7 +123,16 @@ export function EntryScreen({
             value={categoryDraft.icon}
             onChange={(icon) => onCategoryDraftChange({ ...categoryDraft, icon, type: draft.type })}
           />
-          <PrimaryButton label="新增分类" onPress={onSaveCategory} />
+          <PrimaryButton
+            label="新增分类"
+            onPress={async () => {
+              const saved = await onSaveCategory();
+              if (saved) {
+                setShowCategoryForm(false);
+                setShowAllCategories(false);
+              }
+            }}
+          />
         </View>
       ) : null}
 
