@@ -1,29 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { styles } from "../styles";
-import { Account, Category, Transaction } from "../types";
+import { Category, Transaction } from "../types";
 import { formatMoney } from "../utils/money";
 
 export function TransactionRow({
   transaction,
   categories,
-  accounts,
   onEdit,
   onCopy,
   onDelete
 }: {
   transaction: Transaction;
   categories: Category[];
-  accounts: Account[];
   onEdit: () => void;
   onCopy: () => void;
   onDelete: () => void;
 }) {
   const category = categories.find((item) => item.id === transaction.categoryId);
-  const account = accounts.find((item) => item.id === transaction.accountId);
   const sign = transaction.type === "expense" ? "-" : "+";
-  const sourceLabel = transaction.source === "ocr" ? "截图识别" : "手动记账";
-  const metaParts = [category?.name ?? "未分类", account?.name, sourceLabel].filter(Boolean);
+  const categoryName = category?.name ?? "未分类";
 
   return (
     <View style={styles.transactionRow}>
@@ -32,7 +28,7 @@ export function TransactionRow({
       </View>
       <View style={styles.flex}>
         <Text style={styles.transactionTitle}>{transaction.merchant || category?.name || "账单"}</Text>
-        <Text style={styles.transactionMeta}>{metaParts.join(" · ")}</Text>
+        <Text style={styles.transactionMeta}>{categoryName}</Text>
         {transaction.note ? <Text style={styles.transactionNote}>{transaction.note}</Text> : null}
       </View>
       <View style={styles.transactionRight}>

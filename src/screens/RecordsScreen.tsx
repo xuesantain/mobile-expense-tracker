@@ -86,7 +86,6 @@ export function RecordsScreen({
             key={item.id}
             transaction={item}
             categories={categories}
-            accounts={accounts}
             onEdit={() => onEdit(item)}
             onCopy={() => onCopy(item)}
             onDelete={() => onDelete(item.id)}

@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { TransactionRow } from "../components/TransactionRow";
 import { EmptyState, PrimaryButton } from "../components/ui";
 import { styles } from "../styles";
-import { Account, Category, DashboardSummary, Transaction } from "../types";
+import { Category, DashboardSummary, Transaction } from "../types";
 import { formatMonthLabel } from "../utils/date";
 import { formatMoney } from "../utils/money";
 
@@ -13,7 +13,6 @@ export function HomeScreen({
   month,
   transactions,
   categories,
-  accounts,
   onPreviousMonth,
   onNextMonth,
   onSelectMonth,
@@ -27,7 +26,6 @@ export function HomeScreen({
   month: string;
   transactions: Transaction[];
   categories: Category[];
-  accounts: Account[];
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   onSelectMonth: (month: string) => void;
@@ -128,7 +126,6 @@ export function HomeScreen({
                 key={item.id}
                 transaction={item}
                 categories={categories}
-                accounts={accounts}
                 onEdit={() => onEdit(item)}
                 onCopy={() => onCopy(item)}
                 onDelete={() => onDelete(item.id)}

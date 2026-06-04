@@ -632,7 +632,6 @@ export default function App() {
               previousSummary={previousSummary}
               transactions={transactions}
               categories={categories}
-              accounts={accounts}
               onPreviousMonth={() => changeMonth(-1)}
               onNextMonth={() => changeMonth(1)}
               onSelectMonth={selectMonth}
