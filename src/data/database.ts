@@ -13,6 +13,7 @@ import {
 } from "../types";
 import { defaultAccounts, defaultCategories } from "./defaults";
 import { currentMonth, monthRange } from "../utils/date";
+import { transactionsToCsv } from "../utils/csv";
 
 export type ExpenseDatabase = SQLite.SQLiteDatabase;
 
@@ -361,13 +362,11 @@ export async function getDashboardSummary(db: ExpenseDatabase, month = currentMo
 export async function exportTransactionsCsv(db: ExpenseDatabase): Promise<string> {
   const transactionRows = await db.getAllAsync<DbTransaction>("SELECT * FROM transactions ORDER BY date DESC, created_at DESC");
   const transactions = transactionRows.map(mapTransaction);
-  const header = ["date", "type", "amount", "category_id", "account_id", "merchant", "note", "source"];
-  const csvRows = transactions.map((item) =>
-    [item.date, item.type, item.amount, item.categoryId, item.accountId, item.merchant, item.note, item.source]
-      .map(csvCell)
-      .join(",")
-  );
-  return `\uFEFF${[header.join(","), ...csvRows].join("\n")}`;
+  const [categoryRows, accountRows] = await Promise.all([
+    db.getAllAsync<DbCategory>("SELECT * FROM categories"),
+    db.getAllAsync<DbAccount>("SELECT * FROM accounts")
+  ]);
+  return transactionsToCsv(transactions, categoryRows.map(mapCategory), accountRows.map(mapAccount));
 }
 
 export async function getAppSettings(db: ExpenseDatabase): Promise<AppSettings> {
@@ -430,11 +429,6 @@ async function localizeDefaultNames(db: ExpenseDatabase): Promise<void> {
   for (const account of defaultAccounts) {
     await db.runAsync("UPDATE accounts SET name = ?, icon = ?, sort_order = ? WHERE id = ?", account.name, account.icon, account.sortOrder, account.id);
   }
-}
-
-function csvCell(value: string | number): string {
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 type DbCategory = { id: string; name: string; type: "expense" | "income"; icon: string; sort_order: number };
