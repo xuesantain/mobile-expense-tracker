@@ -368,11 +368,14 @@ export default function App() {
   async function saveAccountDraft() {
     if (!db || !accountDraft.name.trim()) {
       Alert.alert("账户名称必填", "请输入账户名称。");
-      return;
+      return false;
     }
-    await saveAccount(db, accountDraft);
+    const saved = await saveAccount(db, accountDraft);
+    setDraft((current) => ({ ...current, accountId: saved.id }));
     setAccountDraft({ name: "", icon: "wallet" });
     await refresh(db, filters, month);
+    showToast(`已添加账户：${saved.name}`);
+    return true;
   }
 
   async function exportCsv() {
@@ -642,6 +645,7 @@ export default function App() {
               entryMode={entryMode}
               editing={Boolean(editingId)}
               categories={categories}
+              accounts={accounts}
               onDraftChange={setDraft}
               onTypeChange={updateDraftType}
               onSubmit={submitTransaction}
@@ -653,6 +657,9 @@ export default function App() {
               onCategoryDraftChange={setCategoryDraft}
               onSaveCategory={saveCategoryDraft}
               onDeleteCategory={removeCategory}
+              accountDraft={accountDraft}
+              onAccountDraftChange={setAccountDraft}
+              onSaveAccount={saveAccountDraft}
             />
           ) : null}
           {activeTab === "stats" ? <StatsScreen categories={categories} month={month} transactions={transactions} /> : null}

@@ -2,17 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ChoiceWrap, Field, PrimaryButton, Segment } from "../components/ui";
 import { styles } from "../styles";
-import { Category, DraftTransaction, EntryMode, ManageableCategory, TransactionType } from "../types";
+import { Account, Category, DraftTransaction, EntryMode, ManageableAccount, ManageableCategory, TransactionType } from "../types";
 import { todayIso } from "../utils/date";
 import { parseAmount } from "../utils/money";
 
 const iconOptions = ["restaurant", "bus", "bag", "home", "medkit", "game-controller", "cart", "cafe", "pricetag", "ellipsis-horizontal"];
+const accountIconOptions = ["wallet", "chatbubble-ellipses", "card", "cash", "phone-portrait", "albums-outline"];
 
 export function EntryScreen({
   draft,
   entryMode,
   editing,
   categories,
+  accounts,
   onDraftChange,
   onTypeChange,
   onSubmit,
@@ -20,12 +22,16 @@ export function EntryScreen({
   categoryDraft,
   onCategoryDraftChange,
   onSaveCategory,
-  onDeleteCategory
+  onDeleteCategory,
+  accountDraft,
+  onAccountDraftChange,
+  onSaveAccount
 }: {
   draft: DraftTransaction;
   entryMode: EntryMode;
   editing: boolean;
   categories: Category[];
+  accounts: Account[];
   onDraftChange: (draft: DraftTransaction) => void;
   onTypeChange: (type: TransactionType) => void;
   onSubmit: (options?: { stayOnEntry?: boolean }) => void;
@@ -34,8 +40,12 @@ export function EntryScreen({
   onCategoryDraftChange: (draft: ManageableCategory) => void;
   onSaveCategory: () => boolean | Promise<boolean>;
   onDeleteCategory: (category: Category) => void;
+  accountDraft: ManageableAccount;
+  onAccountDraftChange: (draft: ManageableAccount) => void;
+  onSaveAccount: () => boolean | Promise<boolean>;
 }) {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showAccountForm, setShowAccountForm] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const visibleCategories = categories.filter((item) => item.type === draft.type);
@@ -47,10 +57,11 @@ export function EntryScreen({
     ...categoryChoices.map((item) => ({ id: item.id, label: item.name, icon: item.icon, onLongPress: () => onDeleteCategory(item) })),
     { id: "__add_category__", label: "添加分类", icon: "add-circle" }
   ];
+  const accountItems = [...accounts.map((item) => ({ id: item.id, label: item.name, icon: item.icon })), { id: "__add_account__", label: "添加账户", icon: "add-circle" }];
   const selectedDate = parseDateParts(draft.date);
   const dateOptions = useMemo(() => buildDateOptions(draft.date), [draft.date]);
   const amountValue = parseAmount(draft.amount);
-  const canSubmit = amountValue > 0 && Boolean(draft.categoryId);
+  const canSubmit = amountValue > 0 && Boolean(draft.categoryId) && Boolean(draft.accountId);
   const modeNotice = getModeNotice(entryMode, draft.source);
   const canStayAfterSave = !editing && draft.source === "manual";
 
@@ -89,7 +100,7 @@ export function EntryScreen({
         placeholder="金额，例如 28.50"
         style={styles.amountInput}
       />
-      {!canSubmit ? <Text style={styles.formHint}>输入大于 0 的金额并选择分类后即可保存。</Text> : null}
+      {!canSubmit ? <Text style={styles.formHint}>输入大于 0 的金额，并选择分类和账户后即可保存。</Text> : null}
 
       <ChoiceWrap
         title="分类"
@@ -182,6 +193,43 @@ export function EntryScreen({
           </View>
         ) : null}
       </View>
+
+      <ChoiceWrap
+        title="账户"
+        items={accountItems}
+        value={draft.accountId}
+        onChange={(accountId) => {
+          if (accountId === "__add_account__") {
+            setShowAccountForm((current) => !current);
+            return;
+          }
+          setShowAccountForm(false);
+          onDraftChange({ ...draft, accountId });
+        }}
+      />
+      {showAccountForm ? (
+        <View style={styles.inlineAddPanel}>
+          <Text style={styles.statLabel}>新增账户</Text>
+          <View style={styles.wrapRow}>
+            <TextInput value={accountDraft.name} onChangeText={(name) => onAccountDraftChange({ ...accountDraft, name })} placeholder="新账户名" style={[styles.input, styles.smallInput]} />
+          </View>
+          <ChoiceWrap
+            title="选择图标"
+            items={accountIconOptions.map((icon) => ({ id: icon, label: accountIconLabel(icon), icon }))}
+            value={accountDraft.icon}
+            onChange={(icon) => onAccountDraftChange({ ...accountDraft, icon })}
+          />
+          <PrimaryButton
+            label="新增账户"
+            onPress={async () => {
+              const saved = await onSaveAccount();
+              if (saved) {
+                setShowAccountForm(false);
+              }
+            }}
+          />
+        </View>
+      ) : null}
 
       <Field label="备注" value={draft.note} placeholder="可选" onChangeText={(note) => onDraftChange({ ...draft, note })} />
       <Field label="商户/对象" value={draft.merchant} placeholder="店铺、收款方或付款方" onChangeText={(merchant) => onDraftChange({ ...draft, merchant })} />
@@ -295,6 +343,18 @@ function iconLabel(icon: string): string {
     cafe: "咖啡",
     pricetag: "标签",
     "ellipsis-horizontal": "其他"
+  };
+  return labels[icon] ?? icon;
+}
+
+function accountIconLabel(icon: string): string {
+  const labels: Record<string, string> = {
+    wallet: "钱包",
+    "chatbubble-ellipses": "微信",
+    card: "银行卡",
+    cash: "现金",
+    "phone-portrait": "手机",
+    "albums-outline": "账户"
   };
   return labels[icon] ?? icon;
 }
