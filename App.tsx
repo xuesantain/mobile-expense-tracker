@@ -100,6 +100,7 @@ export default function App() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [previousSummary, setPreviousSummary] = useState<DashboardSummary>(emptySummary);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth());
@@ -160,11 +161,12 @@ export default function App() {
     };
     const previousMonth = shiftMonth(nextMonth, -1);
 
-    const [nextCategories, nextAccounts, nextBudgets, nextTransactions, nextSummary, nextPreviousSummary] = await Promise.all([
+    const [nextCategories, nextAccounts, nextBudgets, nextTransactions, nextAllTransactions, nextSummary, nextPreviousSummary] = await Promise.all([
       listCategories(database),
       listAccounts(database),
       listBudgets(database, nextMonth),
       listTransactions(database, transactionFilters),
+      listTransactions(database, {}),
       getDashboardSummary(database, nextMonth),
       getDashboardSummary(database, previousMonth)
     ]);
@@ -173,6 +175,7 @@ export default function App() {
     setAccounts(nextAccounts);
     setBudgets(nextBudgets);
     setTransactions(nextTransactions);
+    setAllTransactions(nextAllTransactions);
     setSummary(nextSummary);
     setPreviousSummary(nextPreviousSummary);
     setBudgetAmount(String(nextBudgets.find((item) => item.categoryId === null)?.amount ?? ""));
@@ -662,7 +665,7 @@ export default function App() {
               onSaveAccount={saveAccountDraft}
             />
           ) : null}
-          {activeTab === "stats" ? <StatsScreen categories={categories} month={month} transactions={transactions} /> : null}
+          {activeTab === "stats" ? <StatsScreen categories={categories} month={month} transactions={allTransactions} /> : null}
           {activeTab === "discover" ? (
             <DiscoverScreen
               month={month}

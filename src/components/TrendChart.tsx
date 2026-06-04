@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LayoutChangeEvent, Pressable, Text, View } from "react-native";
 import { styles } from "../styles";
 import { TransactionType } from "../types";
@@ -23,9 +23,14 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
   const average = points.length ? Math.round((total / points.length) * 100) / 100 : 0;
   const actualMaxValue = Math.max(...values, 0);
   const scaleMaxValue = actualMaxValue > 0 ? actualMaxValue : 1;
+  const hasData = actualMaxValue > 0;
   const selected = selectedIndex === null ? null : points[selectedIndex] ?? null;
   const nodes = useMemo(() => layoutNodes(points, metric, scaleMaxValue, plotWidth), [points, metric, scaleMaxValue, plotWidth]);
   const metricLabel = metric === "expense" ? "支出" : "收入";
+
+  useEffect(() => {
+    setSelectedIndex(null);
+  }, [metric, points]);
 
   function handlePlotLayout(event: LayoutChangeEvent) {
     setPlotWidth(event.nativeEvent.layout.width);
@@ -40,7 +45,7 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
           </Text>
           <Text style={styles.trendMetaText}>平均值：{formatMoney(average)}</Text>
         </View>
-        <Text style={styles.trendMaxText}>{actualMaxValue > 0 ? formatMoney(actualMaxValue) : ""}</Text>
+        <Text style={styles.trendMaxText}>{hasData ? formatMoney(actualMaxValue) : ""}</Text>
       </View>
       {selected ? (
         <Text style={styles.trendSelectedText}>
@@ -49,8 +54,8 @@ export function TrendChart({ points, metric }: { points: TrendPoint[]; metric: T
       ) : null}
       <View style={styles.lineChartWrap}>
         <View style={styles.yAxis}>
-          <Text style={styles.axisLabel}>{formatCompactMoney(actualMaxValue)}</Text>
-          <Text style={styles.axisLabel}>{formatCompactMoney(actualMaxValue / 2)}</Text>
+          <Text style={styles.axisLabel}>{hasData ? formatCompactMoney(actualMaxValue) : ""}</Text>
+          <Text style={styles.axisLabel}>{hasData ? formatCompactMoney(actualMaxValue / 2) : ""}</Text>
           <Text style={styles.axisLabel}>0</Text>
         </View>
         <View style={[styles.simpleLinePlot, styles.flex]} onLayout={handlePlotLayout}>
