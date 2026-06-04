@@ -126,9 +126,7 @@ function resolveCategoryId(item: StructuredReceiptItem, categories: Category[]):
       return matched.id;
     }
   }
-  return fallbackStructuredItem([item.merchant, item.note, item.categoryName].filter(Boolean).join("\n"), categories).categoryName
-    ? null
-    : parseReceiptText([item.merchant, item.note, item.categoryName].filter(Boolean).join("\n"), categories).categoryId;
+  return parseReceiptText([item.merchant, item.note, item.categoryName].filter(Boolean).join("\n"), categories).categoryId;
 }
 
 function resolveAccountId(item: StructuredReceiptItem, accounts: Account[]): string | null {
