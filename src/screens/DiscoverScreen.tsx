@@ -26,6 +26,7 @@ export function DiscoverScreen({
   onToggleCandidate,
   onUpdateCandidate,
   onImportCandidates,
+  onClearOcr,
   onOpenSettings
 }: {
   month: string;
@@ -47,6 +48,7 @@ export function DiscoverScreen({
   onToggleCandidate: (id: string) => void;
   onUpdateCandidate: (id: string, patch: Partial<ReceiptImportCandidate>) => void;
   onImportCandidates: () => void;
+  onClearOcr: () => void;
   onOpenSettings: () => void;
 }) {
   const [mode, setMode] = useState<"ocr" | "budget">("ocr");
@@ -78,6 +80,7 @@ export function DiscoverScreen({
           onToggleCandidate={onToggleCandidate}
           onUpdateCandidate={onUpdateCandidate}
           onImportCandidates={onImportCandidates}
+          onClear={onClearOcr}
           onOpenSettings={onOpenSettings}
         />
       ) : (

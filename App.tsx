@@ -569,6 +569,24 @@ export default function App() {
     setActiveTab("records");
   }
 
+  function clearOcrSession() {
+    const reset = () => {
+      setOcrText("");
+      setOcrImageUri(null);
+      setOcrImageUris([]);
+      setReceiptCandidates([]);
+      setPendingScanId(null);
+    };
+    if (receiptCandidates.length) {
+      Alert.alert("清空本次识别", "当前候选账单还没有全部导入，清空后需要重新选择图片或粘贴文本。", [
+        { text: "取消", style: "cancel" },
+        { text: "清空", style: "destructive", onPress: reset }
+      ]);
+      return;
+    }
+    reset();
+  }
+
   function updateDraftType(type: TransactionType) {
     const nextCategory = (type === "expense" ? expenseCategories : incomeCategories)[0]?.id ?? draft.categoryId;
     setDraft((current) => ({ ...current, type, categoryId: nextCategory }));
@@ -686,6 +704,7 @@ export default function App() {
               onToggleCandidate={toggleReceiptCandidate}
               onUpdateCandidate={updateReceiptCandidate}
               onImportCandidates={importReceiptCandidates}
+              onClearOcr={clearOcrSession}
               onOpenSettings={() => setActiveTab("profile")}
             />
           ) : null}

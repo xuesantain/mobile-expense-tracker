@@ -20,6 +20,7 @@ export function OcrScreen({
   onToggleCandidate,
   onUpdateCandidate,
   onImportCandidates,
+  onClear,
   onOpenSettings
 }: {
   text: string;
@@ -35,12 +36,14 @@ export function OcrScreen({
   onToggleCandidate: (id: string) => void;
   onUpdateCandidate: (id: string, patch: Partial<ReceiptImportCandidate>) => void;
   onImportCandidates: () => void;
+  onClear: () => void;
   onOpenSettings: () => void;
 }) {
   const [editingCandidateId, setEditingCandidateId] = useState<string | null>(null);
   const selectedCount = candidates.filter((item) => item.selected && item.amount && item.date && !item.duplicateOfTransactionId).length;
   const duplicateCount = candidates.filter((item) => item.duplicateOfTransactionId).length;
   const incompleteCount = candidates.filter((item) => !item.amount || !item.date).length;
+  const hasSessionContent = Boolean(imageUri || text.trim() || candidates.length);
 
   return (
     <View>
@@ -79,6 +82,11 @@ export function OcrScreen({
         style={styles.textArea}
       />
       <PrimaryButton label={extracting ? "正在识别..." : "解析候选账单"} onPress={onParse} disabled={extracting} />
+      {hasSessionContent ? (
+        <Text style={styles.entryViewRecordsAction} onPress={onClear}>
+          清空本次识别
+        </Text>
+      ) : null}
       {candidates.length ? (
         <View style={styles.chartCard}>
           <Text style={styles.sectionTitleText}>导入确认</Text>
