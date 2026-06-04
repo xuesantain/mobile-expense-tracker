@@ -45,6 +45,32 @@ describe("receipt import utilities", () => {
     });
   });
 
+  it("resolves structured category and account names", () => {
+    const candidates = candidatesFromReceiptText({
+      rawText: "依八台自选煲仔饭\n2026-05-31\n实付 115.70",
+      imageUri: "file://receipt.jpg",
+      categories: defaultCategories,
+      accounts: defaultAccounts,
+      existingTransactions: [],
+      structuredItems: [
+        {
+          amount: 115.7,
+          type: "expense",
+          merchant: "依八台自选煲仔饭",
+          date: "2026-05-31",
+          categoryName: "餐饮",
+          accountName: "微信支付"
+        }
+      ]
+    });
+
+    expect(candidates[0]).toMatchObject({
+      categoryId: "cat-food",
+      accountId: "acc-wechat",
+      selected: true
+    });
+  });
+
   it("marks duplicate screenshot candidates as unselected", () => {
     const candidates = candidatesFromReceiptText({
       rawText: "luckin coffee\n2026-05-31\n实付 10.50",
