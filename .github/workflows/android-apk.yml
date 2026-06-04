@@ -50,6 +50,20 @@ jobs:
           test -f android/gradlew
           find android -maxdepth 2 -type f | sort | head -100
 
+      - name: Embed release JavaScript bundle
+        run: |
+          set -euxo pipefail
+          mkdir -p android/app/src/main/assets android/app/src/main/res
+          npx expo export:embed \
+            --platform android \
+            --dev false \
+            --entry-file node_modules/expo/AppEntry.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res \
+            --max-workers 1 \
+            --reset-cache 2>&1 | tee expo-bundle.log
+          test -s android/app/src/main/assets/index.android.bundle
+
       - name: Build release APK
         run: |
           set -euxo pipefail
@@ -58,6 +72,14 @@ jobs:
           ./gradlew --version
           ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
 
+      - name: Verify APK contains release bundle
+        run: |
+          set -euxo pipefail
+          APK="$(find android/app/build/outputs/apk/release -name '*.apk' | head -n 1)"
+          test -s "$APK"
+          unzip -l "$APK" | tee apk-contents.log
+          unzip -l "$APK" | grep -q 'assets/index.android.bundle'
+
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -65,7 +87,9 @@ jobs:
           name: android-build-logs
           path: |
             prebuild.log
+            expo-bundle.log
             gradle-build.log
+            apk-contents.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

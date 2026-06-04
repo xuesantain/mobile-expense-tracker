@@ -17,6 +17,9 @@
       "versionCode": 1,
       "permissions": [
         "READ_MEDIA_IMAGES"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
